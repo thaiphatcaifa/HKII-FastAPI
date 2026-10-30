@@ -11,7 +11,7 @@ from app.config import settings
 from app.db import SessionLocal
 from app.error_handlers import register_exception_handlers
 from app.logging_config import setup_logging
-from app.routers import attendance, auth, classes, coach, reports, scores, tuition, users
+from app.routers import ai, attendance, auth, classes, coach, reports, scores, tuition, users
 from app.services.tuition_jobs import refresh_overdue
 
 setup_logging()
@@ -43,12 +43,13 @@ TAGS_METADATA = [
     {"name": "tuition", "description": "Học phí: tạo khoản thu, thanh toán, tự động đánh dấu quá hạn."},
     {"name": "reports", "description": "Báo cáo lớp học và xuất file Excel."},
     {"name": "coach", "description": "AI Coach nhận xét bài viết/bài nói (Gemini hoặc bộ nhận xét theo luật)."},
+    {"name": "ai", "description": "AI hỗ trợ giáo viên: cảnh báo học viên rủi ro (luật + gợi ý AI) và nhận xét học viên (AI soạn nháp, giáo viên duyệt)."},
     {"name": "system", "description": "Kiểm tra tình trạng hệ thống."},
 ]
 
 app = FastAPI(
     title="HKII - Hệ thống quản lý trung tâm (FastAPI + PostgreSQL)",
-    version="0.3.0",
+    version="0.4.0",
     description=(
         "Backend của hệ thống quản lý trung tâm.\n\n"
         "**Thử API trên trang này:** bấm **Authorize**, nhập username/password (tài khoản mẫu `admin`) rồi gọi các endpoint.\n\n"
@@ -99,7 +100,7 @@ COMMON_RESPONSES = {
     401: {"description": "Chưa đăng nhập hoặc phiên đã hết hạn."},
     403: {"description": "Không đủ quyền thực hiện thao tác này."},
 }
-for module in (auth, users, classes, attendance, scores, tuition, reports, coach):
+for module in (auth, users, classes, attendance, scores, tuition, reports, coach, ai):
     app.include_router(module.router, responses=COMMON_RESPONSES)
 
 

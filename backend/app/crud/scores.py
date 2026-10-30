@@ -62,6 +62,21 @@ def list_scores(
     return paginate(db, query, skip, limit)
 
 
+def scaled_scores_by_student(db: Session, class_id: int, student_id: int | None = None) -> dict[int, list[float]]:
+    """Điểm (quy về thang 10) của từng học viên trong lớp, theo thứ tự thời gian (cũ -> mới)."""
+    query = (
+        select(Score.student_id, Score.value, Score.max_value)
+        .where(Score.class_id == class_id)
+        .order_by(Score.recorded_at, Score.id)
+    )
+    if student_id is not None:
+        query = query.where(Score.student_id == student_id)
+    result: dict[int, list[float]] = defaultdict(list)
+    for sid, value, max_value in db.execute(query):
+        result[sid].append(float(value) / float(max_value) * 10)
+    return dict(result)
+
+
 def average_by_class(db: Session, student_id: int, teacher_id: int | None = None) -> list[tuple[int, int, float]]:
     """[(class_id, số đầu điểm, điểm TB quy về thang 10)] của một học viên."""
     query = select(Score).where(Score.student_id == student_id)

@@ -15,6 +15,7 @@ from app.models import (
     TuitionRecord,
     User,
 )
+from app.services.stats import attendance_rate
 
 
 def class_summary_frame(db: Session, classroom: Classroom) -> pd.DataFrame:
@@ -50,11 +51,8 @@ def class_summary_frame(db: Session, classroom: Classroom) -> pd.DataFrame:
         mine = att[att.student_id == student_id]["status"] if not att.empty else []
         counts = {s: int((mine == s).sum()) if len(mine) else 0 for s in AttendanceStatus}
         total = len(mine)
-        denominator = total - counts[AttendanceStatus.excused]
-        rate = (
-            round((counts[AttendanceStatus.present] + counts[AttendanceStatus.late]) / denominator, 4)
-            if denominator > 0
-            else None
+        rate = attendance_rate(
+            counts[AttendanceStatus.present], counts[AttendanceStatus.late], counts[AttendanceStatus.excused], total
         )
         s_mine = sc[sc.student_id == student_id] if not sc.empty else sc
         if len(s_mine):

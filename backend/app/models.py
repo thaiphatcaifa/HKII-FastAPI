@@ -51,6 +51,16 @@ class TuitionStatus(str, enum.Enum):
     overdue = "overdue"
 
 
+class AiNoteKind(str, enum.Enum):
+    review = "review"  # nhận xét học viên (nháp -> giáo viên duyệt -> công bố cho học viên/phụ huynh)
+    advice = "advice"  # gợi ý hành động cho giáo viên về học viên có rủi ro (không bao giờ công bố)
+
+
+class AiNoteStatus(str, enum.Enum):
+    draft = "draft"
+    published = "published"
+
+
 def _enum(enum_cls, length: int = 16):
     # Lưu giá trị chữ thường dạng VARCHAR, không dùng ENUM gốc của PostgreSQL
     return Enum(
@@ -159,3 +169,25 @@ class CoachSession(Base):
     feedback: Mapped[str] = mapped_column(Text)
     provider: Mapped[str] = mapped_column(String(32))  # gemini | rules
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class AiNote(Base):
+    """Nội dung do AI soạn cho giáo viên: nhận xét học viên và gợi ý hành động.
+
+    Nhận xét (review) đi qua quy trình nháp -> giáo viên sửa/duyệt -> công bố; chỉ bản đã công bố
+    mới hiện với học viên/phụ huynh. Gợi ý (advice) chỉ dành cho giáo viên.
+    """
+
+    __tablename__ = "ai_notes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[AiNoteKind] = mapped_column(_enum(AiNoteKind), index=True)
+    class_id: Mapped[int] = mapped_column(ForeignKey("classes.id", ondelete="CASCADE"), index=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    author_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
+    content: Mapped[str] = mapped_column(Text)
+    provider: Mapped[str] = mapped_column(String(32))  # gemini | rules
+    status: Mapped[AiNoteStatus] = mapped_column(_enum(AiNoteStatus), default=AiNoteStatus.draft)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    updated_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    published_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))

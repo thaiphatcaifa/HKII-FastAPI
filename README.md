@@ -20,6 +20,7 @@ Database + Cloud Functions) bằng **FastAPI**, **PostgreSQL** và **Docker**. P
 | 3 | Điểm danh và điểm số (+ báo cáo) | `/attendance/batch`, `/attendance/summary/{id}`, `/scores`, `/reports/class/{id}/summary`, `/reports/class/{id}/export.xlsx` |
 | 4 | Học phí | `/tuition`, `/tuition/{id}/pay`, `/tuition/mark-overdue`, `/tuition/summary` |
 | 5 | AI Coach | `/coach/feedback`, `/coach/history` |
+| + | AI hỗ trợ giáo viên (cảnh báo rủi ro + nhận xét học viên) | `/ai/risk`, `/ai/risk/advice`, `/ai/reviews`, `/ai/reviews/{id}/publish` |
 
 Vai trò: `admin`, `teacher`, `student`, `parent`. Quyền được kiểm tra ở `backend/app/deps.py`
 (thay cho `database.rules.json` của Firebase).
@@ -60,6 +61,19 @@ docker compose run --rm --no-deps api python -m pytest -q
 Không cần key vẫn chạy (bộ nhận xét theo luật, `provider = "rules"`). Muốn dùng Gemini thật,
 đặt `GEMINI_API_KEY` trong `.env`; nếu gọi lỗi, hệ thống tự rơi về bộ nhận xét theo luật.
 
+## AI hỗ trợ giáo viên
+
+Hai tính năng nằm trong màn hình lớp học của giáo viên (tab **Cảnh báo** và **Nhận xét AI**), dùng chung lớp gọi Gemini `services/gemini.py`.
+Nguyên tắc: **AI chỉ đề xuất, giáo viên quyết định**; không có key hoặc Gemini lỗi thì tự dùng bộ soạn theo luật nên vẫn chạy được.
+
+- **Cảnh báo học viên có nguy cơ tụt lại** (`GET /ai/risk?class_id=`): mức rủi ro (cao / trung bình / thấp) tính bằng **luật minh bạch** từ chuyên cần và điểm số
+  (`services/insights.py`: chuyên cần thấp, vắng liên tiếp, hay đi trễ, điểm trung bình thấp, điểm giảm mạnh). Mỗi học viên kèm lý do cụ thể.
+  Bấm **Gợi ý hành động** (`POST /ai/risk/advice`) để AI đề xuất 3 việc nên làm. Không dùng dữ liệu học phí.
+- **Nhận xét học viên** (`/ai/reviews`): AI soạn **bản nháp** → giáo viên sửa (`PATCH`) → **Công bố** (`POST .../publish`) → học viên và phụ huynh mới thấy
+  ở trang Tổng quan. Có thể **Thu hồi** về nháp hoặc xóa. Học viên/phụ huynh chỉ đọc được bản đã công bố của chính mình.
+- **Riêng tư:** lời nhắc gửi cho Gemini chỉ chứa **con số** (tỷ lệ chuyên cần, điểm), không có tên học viên hay ghi chú tự do.
+- **Giới hạn:** mỗi giáo viên tối đa `AI_DAILY_LIMIT` lượt/ngày (mặc định 30, tính chung nhận xét và gợi ý, theo giờ UTC), quá mức trả `429`.
+
 ## Cấu trúc
 
 ```
@@ -67,16 +81,17 @@ docker-compose.yml
 frontend/             # React 19 + Vite + Tailwind, gọi FastAPI (src/api.js)
   Dockerfile  nginx.conf
   src/pages/          # Login, Dashboard, Classes, ClassDetail, Attendance, Grades, Tuition, Users, Coach
+  src/components/     # ui.jsx, Layout, StudentPicker, AiTabs (tab Cảnh báo / Nhận xét AI, thẻ nhận xét cho phụ huynh)
 backend/
   Dockerfile  requirements.txt  alembic.ini
   alembic/            # migration
   app/
     main.py config.py db.py models.py schemas.py security.py deps.py seed.py
     errors.py error_handlers.py logging_config.py pagination.py
-    routers/          # ENDPOINTS: chỉ lo HTTP + phân quyền (auth users classes attendance scores tuition reports coach)
-    crud/             # CRUD: toàn bộ truy vấn ORM/SQL (users classes attendance scores tuition coach)
-    services/         # report.py (pandas), coach.py (AI)
-  tests/              # test_api.py (luồng chính) + test_extra.py (phân trang, PUT, lỗi, logging)
+    routers/          # ENDPOINTS: chỉ lo HTTP + phân quyền (auth users classes attendance scores tuition reports coach ai)
+    crud/             # CRUD: toàn bộ truy vấn ORM/SQL (users classes attendance scores tuition coach ai_notes)
+    services/         # report.py (pandas), gemini.py (gọi Gemini + dự phòng), coach.py, insights.py (luật rủi ro), insights_ai.py (AI soạn nháp)
+  tests/              # test_api.py (luồng chính) + test_extra.py (phân trang, PUT, lỗi, logging) + test_ai.py (AI hỗ trợ giáo viên)
 docs/postman/         # Postman collection + environment để kiểm thử API
 ```
 
@@ -108,8 +123,8 @@ Giao diện được viết mới, gọn, chỉ phục vụ 5 module trên. Màn
 | Vai trò | Màn hình |
 |---|---|
 | admin | Tổng quan, Lớp học (tạo lớp, ghi danh), Người dùng, Học phí, AI Coach |
-| teacher | Lớp của mình: Học viên / Điểm danh / Điểm số / Báo cáo (xuất Excel), AI Coach |
-| student | Tổng quan, Chuyên cần, Điểm số, Học phí, AI Coach |
+| teacher | Lớp của mình: Học viên / Điểm danh / Điểm số / Báo cáo (xuất Excel) / Cảnh báo / Nhận xét AI, AI Coach |
+| student | Tổng quan (kèm nhận xét giáo viên đã công bố), Chuyên cần, Điểm số, Học phí, AI Coach |
 | parent | Như học viên, chọn từng con |
 
 Chạy riêng giao diện để phát triển (cần API ở cổng 8000):

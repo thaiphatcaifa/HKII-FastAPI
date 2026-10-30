@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Clock, GraduationCap, School, TriangleAlert, Users, Wallet, CircleCheck } from 'lucide-react'
 import { api } from '../api'
 import { useAuth } from '../auth'
+import { PublishedReviews } from '../components/AiTabs'
 import StudentPicker, { useStudentChoice } from '../components/StudentPicker'
 import { ErrorBox, Loading, PageTitle, Ring, StatCard, money, useAsync } from '../components/ui'
 
@@ -189,6 +190,7 @@ function FamilyHome() {
           </div>
         ))}
       </div>
+      <PublishedReviews studentId={studentId} />
       <p className="mt-4 flex items-center gap-2 text-xs text-slate-400">
         <GraduationCap className="h-4 w-4" />
         Tỷ lệ chuyên cần = (có mặt + đi trễ) / (tổng số buổi trừ buổi vắng có phép).

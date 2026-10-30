@@ -72,13 +72,13 @@ Sửa code backend hoặc frontend xong thì chạy lại `docker compose up -d 
 
 ### 1.6 Chạy test
 
-Test dùng SQLite riêng, **không đụng PostgreSQL** (15 test):
+Test dùng SQLite riêng, **không đụng PostgreSQL** (46 test):
 
 ```bash
 docker compose run --rm --no-deps api python -m pytest -q
 ```
 
-Kết quả mong đợi: `15 passed`. Test mất khoảng 1 phút vì băm mật khẩu bcrypt cho dữ liệu mẫu ở mỗi test.
+Kết quả mong đợi: `46 passed`. Test mất khoảng 1 phút vì băm mật khẩu bcrypt cho dữ liệu mẫu ở mỗi test.
 
 ### 1.7 Bật AI Coach bằng Gemini (tùy chọn)
 
@@ -141,7 +141,14 @@ Chuẩn bị trước: chạy `docker compose up -d` ít nhất 1 phút trước
 | 2:30–3:15 | Đăng xuất, đăng nhập **`ph.an`** → xem **Chuyên cần**, **Điểm số** của con | "Phụ huynh chỉ xem được con mình. Thử truy cập con của người khác sẽ bị chặn 403." |
 | 3:15–4:00 | Đăng nhập **`admin`** → **Học phí**: tạo khoản, **Đánh dấu quá hạn**, **Ghi nhận đã đóng** | "Học phí chỉ admin quản lý. Giáo viên không xem được học phí." |
 | 4:00–4:40 | Đăng nhập **`hv01`** → **AI Coach**: dán đoạn văn tiếng Anh → **Nhận xét** | "Có Gemini thì dùng Gemini; không có key hoặc lỗi thì tự chuyển sang bộ nhận xét theo luật. Giới hạn 20 lượt/ngày." |
-| 4:40–5:00 | Mở http://localhost:8000/docs, bấm thử `/health` | "API tự sinh tài liệu OpenAPI. Toàn bộ backend có 15 test tự động." |
+| 4:40–5:00 | Mở http://localhost:8000/docs, bấm thử `/health` | "API tự sinh tài liệu OpenAPI. Toàn bộ backend có 46 test tự động." |
+
+**Demo mở rộng (nếu còn thời gian): AI hỗ trợ giáo viên** — đăng nhập **`gv.lan`**, mở lớp **IELTS-A1**:
+
+1. Tab **Cảnh báo**: danh sách học viên xếp theo mức rủi ro, mỗi người có lý do cụ thể. Bấm **Gợi ý hành động** ở một học viên rủi ro. *Nói:* "Mức rủi ro tính bằng luật nên giải thích được; AI chỉ gợi ý việc nên làm và không nhận tên học viên."
+2. Tab **Nhận xét AI**: chọn học viên → **AI soạn nháp** → **Sửa** vài chữ → **Công bố**. *Nói:* "AI chỉ soạn nháp, giáo viên duyệt rồi mới công bố."
+3. Đăng xuất, đăng nhập **`ph.an`** (con là `hv01`): trang **Tổng quan** hiện thẻ **Nhận xét của giáo viên**. Nếu giáo viên chưa công bố thì phụ huynh không thấy gì.
+4. Quay lại giáo viên, bấm **Thu hồi**: thẻ biến mất ở phía phụ huynh.
 
 **Phương án dự phòng nếu demo hỏng:** dùng ảnh chụp màn hình trong slide (slide 8–12) và mở Swagger để minh họa API.
 
@@ -205,6 +212,19 @@ PostgreSQL có thể chuyển sang dịch vụ quản lý.
 Gửi bài viết/bài nói (dạng văn bản) lên `/coach/feedback`. Nếu có `GEMINI_API_KEY` thì gọi Gemini; nếu không có hoặc lỗi thì
 dùng bộ nhận xét theo luật (đếm từ, độ dài câu, từ lặp…). Lịch sử lưu trong bảng `coach_sessions`, mỗi người tối đa 20 lượt/ngày.
 
+**AI hỗ trợ giáo viên khác AI Coach ở điểm nào?**
+AI Coach dành cho học viên luyện viết/nói. Phần mới dành cho giáo viên và gồm hai tính năng, cùng dùng lớp `services/gemini.py`:
+(1) *Cảnh báo rủi ro*: mức rủi ro tính bằng luật từ chuyên cần và điểm số (`services/insights.py`) nên giải thích được lý do; AI chỉ gợi ý 3 hành động.
+(2) *Nhận xét học viên*: AI soạn nháp, giáo viên sửa rồi công bố; học viên/phụ huynh chỉ đọc bản đã công bố (`ai_notes.status`).
+
+**Gửi dữ liệu học viên cho Gemini có an toàn không?**
+Lời nhắc chỉ chứa con số (tỷ lệ chuyên cần, điểm trung bình, xu hướng), không có tên, tài khoản hay ghi chú tự do; test `test_gemini_prompt_has_no_personal_data` kiểm tra điều này.
+AI chỉ đề xuất, mọi nội dung đến tay phụ huynh đều do giáo viên duyệt. Mỗi giáo viên tối đa `AI_DAILY_LIMIT` (30) lượt/ngày để tránh tốn quota.
+
+**Vì sao dùng luật để phát hiện rủi ro thay vì để AI quyết định?**
+Luật minh bạch, tái lập được và không tốn quota: "chuyên cần dưới 60%" hay "vắng 3 buổi liên tiếp" ai cũng kiểm tra được. Nếu để AI phán đoán, kết quả có thể khác nhau
+giữa các lần gọi và khó giải thích với phụ huynh. AI được dùng ở chỗ mạnh hơn: diễn đạt nhận xét và đề xuất hành động.
+
 ---
 
 ## Phụ lục: kiến trúc
@@ -229,4 +249,6 @@ erDiagram
   users ||--o{ tuition_records : "học viên"
   users ||--o{ parent_students : "phụ huynh / học viên"
   users ||--o{ coach_sessions : ""
+  classes ||--o{ ai_notes : "nhận xét / gợi ý"
+  users ||--o{ ai_notes : "học viên, giáo viên soạn"
 ```

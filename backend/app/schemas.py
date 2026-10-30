@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models import AttendanceStatus, Role, TuitionStatus
+from app.models import AiNoteStatus, AttendanceStatus, Role, TuitionStatus
 
 
 class ORM(BaseModel):
@@ -221,6 +221,62 @@ class CoachOut(ORM):
     feedback: str
     provider: str
     created_at: dt.datetime
+
+
+# ---------- AI: cảnh báo rủi ro + nhận xét học viên ----------
+class RiskOut(BaseModel):
+    student_id: int
+    full_name: str
+    level: Literal["high", "medium", "low"]
+    points: int  # tổng điểm rủi ro (0-100), càng cao càng đáng lo
+    enough_data: bool  # False: chưa đủ buổi/điểm để kết luận
+    reasons: list[str]
+    sessions: int
+    attendance_rate: float | None
+    absent_streak: int
+    score_count: int
+    average_10: float | None
+
+
+class AdviceIn(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{"class_id": 1, "student_id": 4}]})
+
+    class_id: int = Field(ge=1)
+    student_id: int = Field(ge=1)
+
+
+class AdviceOut(ORM):
+    id: int
+    class_id: int
+    student_id: int
+    content: str
+    provider: str
+    created_at: dt.datetime
+
+
+class ReviewCreateIn(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{"class_id": 1, "student_id": 4}]})
+
+    class_id: int = Field(ge=1)
+    student_id: int = Field(ge=1)
+
+
+class ReviewUpdateIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    content: str = Field(min_length=10, max_length=3000)
+
+
+class ReviewOut(ORM):
+    id: int
+    class_id: int
+    student_id: int
+    content: str
+    provider: str
+    status: AiNoteStatus
+    created_at: dt.datetime
+    updated_at: dt.datetime
+    published_at: dt.datetime | None
 
 
 # ---------- Nhập người dùng từ CSV ----------

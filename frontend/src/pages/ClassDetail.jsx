@@ -3,6 +3,7 @@ import { Pencil } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { api, download } from '../api'
 import { useAuth } from '../auth'
+import { ReviewsTab, RiskTab } from '../components/AiTabs'
 import {
   ATTENDANCE,
   Badge,
@@ -538,6 +539,8 @@ const TABS = [
   ['attendance', 'Điểm danh'],
   ['scores', 'Điểm số'],
   ['report', 'Báo cáo'],
+  ['risk', 'Cảnh báo'],
+  ['reviews', 'Nhận xét AI'],
 ]
 
 export default function ClassDetail() {
@@ -596,6 +599,8 @@ export default function ClassDetail() {
       {tab === 'attendance' && <AttendanceTab classId={id} students={students} />}
       {tab === 'scores' && <ScoresTab classId={id} students={students} />}
       {tab === 'report' && <ReportTab classId={id} code={classroom.code} />}
+      {tab === 'risk' && <RiskTab classId={id} />}
+      {tab === 'reviews' && <ReviewsTab classId={id} students={students} />}
     </>
   )
 }

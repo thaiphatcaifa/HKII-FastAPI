@@ -14,12 +14,12 @@
 
 | | **A: học vụ và dữ liệu** | **B: tài chính, AI và vận hành** |
 |---|---|---|
-| Module | 1. Đăng nhập, phân quyền<br>2. Lớp học<br>3. Điểm danh, điểm số, báo cáo | 4. Học phí<br>5. AI Coach |
-| Backend (`backend/app/routers/` và `crud/`) | `routers/` + `crud/` của: `auth`, `users`, `classes`, `attendance`, `scores`; `routers/reports.py` | `routers/` + `crud/` của: `tuition`, `coach` (và `services/coach.py`) |
-| Dịch vụ | `services/report.py` (pandas, Excel) | `services/coach.py` (Gemini, bộ nhận xét theo luật) |
-| Giao diện (`frontend/src/pages/`) | `Login`, `Dashboard`, `Classes`, `ClassDetail`, `Attendance`, `Grades`, `Users` | `Tuition`, `Coach` |
+| Module | 1. Đăng nhập, phân quyền<br>2. Lớp học<br>3. Điểm danh, điểm số, báo cáo | 4. Học phí<br>5. AI Coach<br>+ AI hỗ trợ giáo viên (cảnh báo rủi ro, nhận xét học viên) |
+| Backend (`backend/app/routers/` và `crud/`) | `routers/` + `crud/` của: `auth`, `users`, `classes`, `attendance`, `scores`; `routers/reports.py` | `routers/` + `crud/` của: `tuition`, `coach`, `ai` (và `services/coach.py`) |
+| Dịch vụ | `services/report.py` (pandas, Excel), `services/stats.py` (công thức chuyên cần dùng chung) | `services/gemini.py`, `coach.py` (Gemini, bộ nhận xét theo luật), `insights.py` (luật rủi ro), `insights_ai.py` (AI soạn nháp) |
+| Giao diện (`frontend/src/pages/`) | `Login`, `Dashboard`, `Classes`, `ClassDetail`, `Attendance`, `Grades`, `Users` | `Tuition`, `Coach`, `components/AiTabs.jsx` (tab Cảnh báo, Nhận xét AI) |
 | Hạ tầng | Thiết kế CSDL, `models.py`, Alembic | `docker-compose.yml`, `Dockerfile`, `nginx.conf`, `.env`, CI |
-| Test (`backend/tests/`) | Đăng nhập, phân quyền, điểm danh, điểm số, báo cáo | Học phí, AI Coach |
+| Test (`backend/tests/`) | Đăng nhập, phân quyền, điểm danh, điểm số, báo cáo | Học phí, AI Coach, `test_ai.py` |
 | Tài liệu | Sơ đồ ER, ma trận phân quyền | Hướng dẫn chạy, kịch bản demo |
 
 File dùng chung (`models.py`, `schemas.py`, `seed.py`, `components/ui.jsx`): ai sửa thì báo người kia trước, sửa nhỏ và commit riêng.
@@ -34,7 +34,9 @@ File dùng chung (`models.py`, `schemas.py`, `seed.py`, `components/ui.jsx`): ai
 - [ ] Vẽ lại sơ đồ ER và ma trận phân quyền bằng lời của nhóm (không chép nguyên từ slide)
 
 ### Thành viên B
-- [ ] Test giới hạn **20 lượt AI Coach mỗi ngày**
+- [ ] Test giới hạn **20 lượt AI Coach mỗi ngày** (giới hạn `AI_DAILY_LIMIT` của AI hỗ trợ giáo viên đã có test trong `test_ai.py`, viết tương tự)
+- [ ] Thử tính năng **Cảnh báo** và **Nhận xét AI** trên giao diện với dữ liệu mẫu; ghi lại nếu luật rủi ro (ngưỡng trong `services/insights.py`) cần chỉnh cho hợp lý hơn
+- [ ] Giải thích được vì sao rủi ro tính bằng **luật** còn AI chỉ **gợi ý và soạn nháp** (xem câu hỏi bảo vệ trong `HUONG-DAN-CHAY.md`)
 - [ ] **GitHub Actions** chạy `pytest` và `npm run build` mỗi lần push
 - [ ] Chạy test trên **PostgreSQL thật** (hiện test chạy SQLite)
 - [ ] Rà soát bảo mật cấu hình: `SECRET_KEY`, mật khẩu mẫu, `.env` không bị commit

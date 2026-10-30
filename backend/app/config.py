@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.5-flash"
     coach_daily_limit: int = 20
+    # Nhận xét học viên + gợi ý hành động: số lượt AI mỗi giáo viên được dùng trong một ngày (tính theo UTC)
+    ai_daily_limit: int = 30
 
     # Logging: ghi cảnh báo nếu một request chậm hơn ngưỡng này (mili giây)
     log_level: str = "INFO"

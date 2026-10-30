@@ -27,6 +27,14 @@
     {
       "key": "new_class_id",
       "value": ""
+    },
+    {
+      "key": "ai_student_id",
+      "value": ""
+    },
+    {
+      "key": "ai_note_id",
+      "value": ""
     }
   ],
   "item": [
@@ -1245,6 +1253,308 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. AI hỗ trợ giáo viên (Buổi 10–11)",
+      "item": [
+        {
+          "name": "Cảnh báo rủi ro của lớp (luật)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ai/risk?class_id={{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ai",
+                "risk"
+              ],
+              "query": [
+                {
+                  "key": "class_id",
+                  "value": "{{class_id}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json();",
+                  "pm.test(\"Có danh sách học viên kèm mức rủi ro\", () => pm.expect(rows).to.be.an(\"array\"));",
+                  "pm.test(\"Mức rủi ro hợp lệ\", () => rows.forEach(r => pm.expect([\"high\", \"medium\", \"low\"]).to.include(r.level)));",
+                  "if (rows.length) pm.collectionVariables.set(\"ai_student_id\", rows[0].student_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gợi ý hành động cho học viên rủi ro (AI)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ai/risk/advice",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ai",
+                "risk",
+                "advice"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"class_id\": {{class_id}},\n  \"student_id\": {{ai_student_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 (có dấu hiệu rủi ro) hoặc 400 (học viên đang ổn)\", () => pm.expect([201, 400]).to.include(pm.response.code));",
+                  "if (pm.response.code === 201) pm.test(\"provider là gemini hoặc rules\", () => pm.expect([\"gemini\", \"rules\"]).to.include(pm.response.json().provider));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AI soạn NHÁP nhận xét học viên",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ai/reviews",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ai",
+                "reviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"class_id\": {{class_id}},\n  \"student_id\": {{ai_student_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "const note = pm.response.json();",
+                  "pm.test(\"Mới tạo là bản nháp\", () => pm.expect(note.status).to.eql(\"draft\"));",
+                  "pm.collectionVariables.set(\"ai_note_id\", note.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Giáo viên sửa nội dung nhận xét",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ai/reviews/{{ai_note_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ai",
+                "reviews",
+                "{{ai_note_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Em học chăm chỉ, giáo viên đã chỉnh lại nhận xét này trước khi gửi phụ huynh.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Nội dung đã được sửa\", () => pm.expect(pm.response.json().content).to.include(\"giáo viên đã chỉnh\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Công bố nhận xét cho học viên/phụ huynh",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ai/reviews/{{ai_note_id}}/publish",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ai",
+                "reviews",
+                "{{ai_note_id}}",
+                "publish"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Đã công bố\", () => pm.expect(pm.response.json().status).to.eql(\"published\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sách nhận xét của lớp",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ai/reviews?class_id={{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ai",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "class_id",
+                  "value": "{{class_id}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có header X-Total-Count\", () => pm.expect(pm.response.headers.has(\"X-Total-Count\")).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Thu hồi nhận xét về nháp",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ai/reviews/{{ai_note_id}}/unpublish",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ai",
+                "reviews",
+                "{{ai_note_id}}",
+                "unpublish"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Về bản nháp\", () => pm.expect(pm.response.json().status).to.eql(\"draft\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xóa nhận xét",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ai/reviews/{{ai_note_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ai",
+                "reviews",
+                "{{ai_note_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
                 ]
               }
             }

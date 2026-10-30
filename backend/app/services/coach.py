@@ -7,13 +7,9 @@ import logging
 import re
 from collections import Counter
 
-import httpx
-
-from app.config import settings
+from app.services.gemini import generate_with_fallback
 
 logger = logging.getLogger("hkii.coach")
-
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 _PROMPT = (
     "Bạn là giáo viên tiếng Anh. Hãy nhận xét ngắn gọn bằng tiếng Việt cho bài {kind} sau của học viên, "
@@ -59,24 +55,10 @@ def rule_based_feedback(kind: str, text: str) -> str:
     return "\n".join(lines)
 
 
-def gemini_feedback(kind: str, text: str) -> str:
-    response = httpx.post(
-        GEMINI_URL.format(model=settings.gemini_model),
-        headers={"x-goog-api-key": settings.gemini_api_key or ""},
-        json={"contents": [{"parts": [{"text": _PROMPT.format(kind=kind, text=text)}]}]},
-        timeout=30,
-    )
-    response.raise_for_status()
-    data = response.json()
-    return data["candidates"][0]["content"]["parts"][0]["text"].strip()
-
-
 def generate_feedback(kind: str, text: str) -> tuple[str, str]:
     """Trả về (nội dung nhận xét, provider)."""
-    if settings.gemini_api_key:
-        try:
-            return gemini_feedback(kind, text), "gemini"
-        except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
-            # Không ghi nội dung bài viết hay khóa API, chỉ ghi loại lỗi
-            logger.warning("Gemini lỗi (%s), chuyển sang bộ nhận xét theo luật", type(exc).__name__)
-    return rule_based_feedback(kind, text), "rules"
+    return generate_with_fallback(
+        _PROMPT.format(kind=kind, text=text),
+        lambda: rule_based_feedback(kind, text),
+        logger,
+    )

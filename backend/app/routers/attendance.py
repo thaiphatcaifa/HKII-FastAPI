@@ -19,6 +19,7 @@ from app.models import Attendance, AttendanceStatus, Role, User
 from app.params import IdPath
 from app.pagination import Page, page_params, set_total
 from app.schemas import AttendanceBatchIn, AttendanceOut, AttendanceSummary
+from app.services.stats import attendance_rate
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
 logger = logging.getLogger("hkii.attendance")
@@ -29,10 +30,9 @@ def compute_summary(student_id: int, statuses: list[AttendanceStatus]) -> Attend
     for status in statuses:
         counts[status] += 1
     total = len(statuses)
-    denominator = total - counts[AttendanceStatus.excused]
-    rate = None
-    if denominator > 0:
-        rate = round((counts[AttendanceStatus.present] + counts[AttendanceStatus.late]) / denominator, 4)
+    rate = attendance_rate(
+        counts[AttendanceStatus.present], counts[AttendanceStatus.late], counts[AttendanceStatus.excused], total
+    )
     return AttendanceSummary(
         student_id=student_id,
         total=total,
