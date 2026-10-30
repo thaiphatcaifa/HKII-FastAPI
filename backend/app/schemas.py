@@ -61,6 +61,15 @@ class ClassCreate(BaseModel):
     teacher_id: int | None = None
 
 
+class ClassReplace(BaseModel):
+    """Dùng cho PUT: thay thế toàn bộ thông tin lớp."""
+
+    code: str = Field(min_length=1, max_length=32)
+    name: str = Field(min_length=1, max_length=120)
+    schedule: str | None = Field(default=None, max_length=200)
+    teacher_id: int | None = None
+
+
 class ClassUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     schedule: str | None = Field(default=None, max_length=200)

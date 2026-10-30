@@ -35,7 +35,7 @@ const NameCell = ({ name }) => (
 // ---------- Tab: học viên ----------
 function StudentsTab({ classId, students, reload }) {
   const { user } = useAuth()
-  const all = useAsync(() => api.get('/students'), [])
+  const all = useAsync(() => api.getAll('/students'), [])
   const [pick, setPick] = useState('')
   const [error, setError] = useState('')
   const enrolled = new Set(students.map((s) => s.id))
@@ -245,7 +245,7 @@ function AttendanceTab({ classId, students }) {
 
 // ---------- Tab: điểm số ----------
 function ScoresTab({ classId, students }) {
-  const scores = useAsync(() => api.get(`/scores?class_id=${classId}`), [classId])
+  const scores = useAsync(() => api.getAll(`/scores?class_id=${classId}`), [classId])
   const [form, setForm] = useState({ student_id: '', kind: 'quiz', value: '', max_value: '10' })
   const [error, setError] = useState('')
   const name = (id) => students.find((s) => s.id === id)?.full_name || `#${id}`

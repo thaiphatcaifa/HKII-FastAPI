@@ -1,9 +1,10 @@
 import datetime as dt
+import logging
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
+from app import crud
 from app.db import get_db
 from app.deps import (
     current_user,
@@ -13,10 +14,13 @@ from app.deps import (
     require_roles,
     scope_class_student_query,
 )
-from app.models import Attendance, AttendanceStatus, Classroom, Enrollment, Role, User
+from app.errors import BadRequestError
+from app.models import Attendance, AttendanceStatus, Role, User
+from app.pagination import Page, page_params, set_total
 from app.schemas import AttendanceBatchIn, AttendanceOut, AttendanceSummary
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
+logger = logging.getLogger("hkii.attendance")
 
 
 def compute_summary(student_id: int, statuses: list[AttendanceStatus]) -> AttendanceSummary:
@@ -49,55 +53,39 @@ def save_attendance(
     classroom = get_class_or_404(db, data.class_id)
     ensure_can_manage_class(user, classroom)
 
-    enrolled = set(
-        db.scalars(select(Enrollment.student_id).where(Enrollment.class_id == data.class_id))
-    )
+    enrolled = crud.classes.enrolled_student_ids(db, data.class_id)
     unknown = {r.student_id for r in data.records} - enrolled
     if unknown:
-        raise HTTPException(400, f"Học viên không thuộc lớp: {sorted(unknown)}")
+        raise BadRequestError(f"Học viên không thuộc lớp: {sorted(unknown)}")
 
-    existing = {
-        a.student_id: a
-        for a in db.scalars(
-            select(Attendance).where(
-                Attendance.class_id == data.class_id, Attendance.date == data.date
-            )
-        )
-    }
-    saved: list[Attendance] = []
-    for record in data.records:
-        row = existing.get(record.student_id)
-        if row is None:
-            row = Attendance(class_id=data.class_id, student_id=record.student_id, date=data.date)
-            db.add(row)
-        row.status = record.status
-        row.note = record.note
-        row.recorded_by = user.id
-        saved.append(row)
-    db.commit()
+    saved = crud.attendance.save_day(db, data.class_id, data.date, data.records, user.id)
+    logger.info("%s điểm danh lớp %s ngày %s (%d học viên)", user.username, classroom.code, data.date, len(saved))
     return saved
 
 
 @router.get("", response_model=list[AttendanceOut])
 def list_attendance(
+    response: Response,
     class_id: int | None = None,
     student_id: int | None = None,
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
+    page: Page = Depends(page_params),
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ):
-    query = select(Attendance).order_by(Attendance.date.desc(), Attendance.id)
-    query = scope_class_student_query(db, user, query, Attendance)
-    if class_id is not None:
-        query = query.where(Attendance.class_id == class_id)
-    if student_id is not None:
-        query = query.where(Attendance.student_id == student_id)
-    if date_from:
-        query = query.where(Attendance.date >= date_from)
-    if date_to:
-        query = query.where(Attendance.date <= date_to)
-    return db.scalars(query).all()
+    items, total = crud.attendance.list_attendance(
+        db,
+        scope=lambda q: scope_class_student_query(db, user, q, Attendance),
+        class_id=class_id,
+        student_id=student_id,
+        date_from=date_from,
+        date_to=date_to,
+        skip=page.skip,
+        limit=page.limit,
+    )
+    set_total(response, total)
+    return items
 
 
 @router.get("/summary/{student_id}", response_model=AttendanceSummary)
@@ -107,8 +95,6 @@ def attendance_summary(
     user: User = Depends(current_user),
 ):
     ensure_can_view_student(db, user, student_id)
-    query = select(Attendance.status).where(Attendance.student_id == student_id)
-    if user.role == Role.teacher:
-        own =select(Classroom.id).where(Classroom.teacher_id == user.id)
-        query = query.where(Attendance.class_id.in_(own))
-    return compute_summary(student_id, list(db.scalars(query)))
+    teacher_id = user.id if user.role == Role.teacher else None
+    statuses = crud.attendance.statuses_of_student(db, student_id, teacher_id)
+    return compute_summary(student_id, statuses)

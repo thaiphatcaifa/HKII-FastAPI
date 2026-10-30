@@ -65,8 +65,8 @@ export default function Classes() {
   const isAdmin = user.role === 'admin'
   const { data, error, loading, reload } = useAsync(async () => {
     const [classes, teachers] = await Promise.all([
-      api.get('/classes'),
-      isAdmin ? api.get('/users?role=teacher') : Promise.resolve([]),
+      api.getAll('/classes'),
+      isAdmin ? api.getAll('/users?role=teacher') : Promise.resolve([]),
     ])
     return { classes, teachers }
   }, [isAdmin])

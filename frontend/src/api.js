@@ -68,8 +68,22 @@ async function request(path, { method = 'GET', body, raw = false } = {}) {
   return res.json()
 }
 
+// Lấy toàn bộ danh sách đã phân trang: gọi nhiều trang (skip/limit) cho tới khi đủ X-Total-Count.
+async function getAll(path, pageSize = 200) {
+  const sep = path.includes('?') ? '&' : '?'
+  const items = []
+  for (;;) {
+    const res = await request(`${path}${sep}skip=${items.length}&limit=${pageSize}`, { raw: true })
+    const page = await res.json()
+    items.push(...page)
+    const total = Number(res.headers.get('X-Total-Count') ?? items.length)
+    if (page.length === 0 || items.length >= total) return items
+  }
+}
+
 export const api = {
   get: (path) => request(path),
+  getAll: (path) => getAll(path),
   post: (path, body = {}) => request(path, { method: 'POST', body }),
   patch: (path, body = {}) => request(path, { method: 'PATCH', body }),
   del: (path) => request(path, { method: 'DELETE' }),

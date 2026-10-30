@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     coach_daily_limit: int = 20
 
+    # Logging: ghi cảnh báo nếu một request chậm hơn ngưỡng này (mili giây)
+    log_level: str = "INFO"
+    slow_request_ms: int = 500
+
     cors_origins: str = "http://localhost:5173,http://localhost:8080"
 
     seed_on_start: bool = False

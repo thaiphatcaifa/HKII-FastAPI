@@ -8,8 +8,8 @@ export default function Grades() {
     if (!studentId) return null
     const [summary, scores, classes] = await Promise.all([
       api.get(`/scores/student/${studentId}/summary`),
-      api.get(`/scores?student_id=${studentId}`),
-      api.get('/classes'),
+      api.getAll(`/scores?student_id=${studentId}`),
+      api.getAll('/classes'),
     ])
     return { summary, scores, classes }
   }, [studentId])

@@ -1,19 +1,16 @@
 """Xác thực + phân quyền. Thay cho database.rules.json của Firebase."""
 import jwt
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app import crud
 from app.db import get_db
-from app.models import Classroom, Enrollment, ParentStudent, Role, User
+from app.errors import ForbiddenError, NotFoundError, UnauthorizedError
+from app.models import Classroom, Role, User
 from app.security import decode_access_token
 
 _bearer = HTTPBearer(auto_error=False)
-
-
-def _unauthorized(detail: str = "Chưa đăng nhập hoặc phiên đã hết hạn.") -> HTTPException:
-    return HTTPException(401, detail, headers={"WWW-Authenticate": "Bearer"})
 
 
 def current_user(
@@ -21,22 +18,22 @@ def current_user(
     db: Session = Depends(get_db),
 ) -> User:
     if creds is None:
-        raise _unauthorized()
+        raise UnauthorizedError()
     try:
         payload = decode_access_token(creds.credentials)
         user_id = int(payload["sub"])
     except (jwt.PyJWTError, KeyError, ValueError):
-        raise _unauthorized()
-    user = db.get(User, user_id)
+        raise UnauthorizedError()
+    user = crud.users.get_by_id(db, user_id)
     if user is None or not user.is_active:
-        raise _unauthorized()
+        raise UnauthorizedError()
     return user
 
 
 def require_roles(*roles: Role):
     def dependency(user: User = Depends(current_user)) -> User:
         if user.role not in roles:
-            raise HTTPException(403, "Không đủ quyền thực hiện thao tác này.")
+            raise ForbiddenError("Không đủ quyền thực hiện thao tác này.")
         return user
 
     return dependency
@@ -50,23 +47,20 @@ def visible_student_ids(db: Session, user: User) -> set[int] | None:
     if user.role == Role.student:
         return {user.id}
     if user.role == Role.parent:
-        rows = db.scalars(select(ParentStudent.student_id).where(ParentStudent.parent_id == user.id))
-        return set(rows)
-    own_classes = select(Classroom.id).where(Classroom.teacher_id == user.id)
-    rows = db.scalars(select(Enrollment.student_id).where(Enrollment.class_id.in_(own_classes)))
-    return set(rows)
+        return crud.users.child_ids(db, user.id)
+    return crud.classes.student_ids_of_teacher(db, user.id)
 
 
 def ensure_can_view_student(db: Session, user: User, student_id: int) -> None:
     ids = visible_student_ids(db, user)
     if ids is not None and student_id not in ids:
-        raise HTTPException(403, "Bạn không có quyền xem dữ liệu của học viên này.")
+        raise ForbiddenError("Bạn không có quyền xem dữ liệu của học viên này.")
 
 
 def get_class_or_404(db: Session, class_id: int) -> Classroom:
-    classroom = db.get(Classroom, class_id)
+    classroom = crud.classes.get_class(db, class_id)
     if classroom is None:
-        raise HTTPException(404, "Không tìm thấy lớp học.")
+        raise NotFoundError("Không tìm thấy lớp học.")
     return classroom
 
 
@@ -75,7 +69,7 @@ def ensure_can_manage_class(user: User, classroom: Classroom) -> None:
         return
     if user.role == Role.teacher and classroom.teacher_id == user.id:
         return
-    raise HTTPException(403, "Bạn không phụ trách lớp này.")
+    raise ForbiddenError("Bạn không phụ trách lớp này.")
 
 
 def scope_class_student_query(db: Session, user: User, query, model):
@@ -83,7 +77,6 @@ def scope_class_student_query(db: Session, user: User, query, model):
     if user.role == Role.admin:
         return query
     if user.role == Role.teacher:
-        own = select(Classroom.id).where(Classroom.teacher_id == user.id)
-        return query.where(model.class_id.in_(own))
+        return query.where(model.class_id.in_(crud.classes.teacher_class_ids_select(user.id)))
     ids = visible_student_ids(db, user) or set()
     return query.where(model.student_id.in_(list(ids)))

@@ -69,8 +69,8 @@ function AdminTuition() {
   const [actionError, setActionError] = useState('')
   const { data, error, loading, reload } = useAsync(async () => {
     const [rows, students, summary] = await Promise.all([
-      api.get(`/tuition${status ? `?status=${status}` : ''}`),
-      api.get('/students'),
+      api.getAll(`/tuition${status ? `?status=${status}` : ''}`),
+      api.getAll('/students'),
       api.get('/tuition/summary'),
     ])
     return { rows, students, summary }
@@ -180,7 +180,7 @@ function AdminTuition() {
 function FamilyTuition() {
   const { list, studentId, setPicked, loading: pl } = useStudentChoice()
   const { data, error, loading } = useAsync(
-    () => (studentId ? api.get(`/tuition?student_id=${studentId}`) : Promise.resolve([])),
+    () => (studentId ? api.getAll(`/tuition?student_id=${studentId}`) : Promise.resolve([])),
     [studentId],
   )
   if (pl || loading) return <Loading />

@@ -20,7 +20,7 @@ export default function Users() {
     if (role) params.set('role', role)
     if (q.trim()) params.set('q', q.trim())
     const qs = params.toString()
-    return api.get(`/users${qs ? `?${qs}` : ''}`)
+    return api.getAll(`/users${qs ? `?${qs}` : ''}`)
   }, [role, q])
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 

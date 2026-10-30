@@ -15,7 +15,7 @@
 | | **A: học vụ và dữ liệu** | **B: tài chính, AI và vận hành** |
 |---|---|---|
 | Module | 1. Đăng nhập, phân quyền<br>2. Lớp học<br>3. Điểm danh, điểm số, báo cáo | 4. Học phí<br>5. AI Coach |
-| Backend (`backend/app/routers/`) | `auth.py`, `users.py`, `classes.py`, `attendance.py`, `scores.py`, `reports.py` | `tuition.py`, `coach.py` (và `services/coach.py`) |
+| Backend (`backend/app/routers/` và `crud/`) | `routers/` + `crud/` của: `auth`, `users`, `classes`, `attendance`, `scores`; `routers/reports.py` | `routers/` + `crud/` của: `tuition`, `coach` (và `services/coach.py`) |
 | Dịch vụ | `services/report.py` (pandas, Excel) | `services/coach.py` (Gemini, bộ nhận xét theo luật) |
 | Giao diện (`frontend/src/pages/`) | `Login`, `Dashboard`, `Classes`, `ClassDetail`, `Attendance`, `Grades`, `Users` | `Tuition`, `Coach` |
 | Hạ tầng | Thiết kế CSDL, `models.py`, Alembic | `docker-compose.yml`, `Dockerfile`, `nginx.conf`, `.env`, CI |

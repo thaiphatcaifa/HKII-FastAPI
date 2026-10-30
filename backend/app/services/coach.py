@@ -3,12 +3,15 @@
 - Có GEMINI_API_KEY: gọi Gemini qua REST (httpx).
 - Không có key, hoặc gọi lỗi: dùng bộ nhận xét theo luật để hệ thống vẫn chạy được khi demo.
 """
+import logging
 import re
 from collections import Counter
 
 import httpx
 
 from app.config import settings
+
+logger = logging.getLogger("hkii.coach")
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
@@ -73,6 +76,7 @@ def generate_feedback(kind: str, text: str) -> tuple[str, str]:
     if settings.gemini_api_key:
         try:
             return gemini_feedback(kind, text), "gemini"
-        except (httpx.HTTPError, KeyError, IndexError, ValueError):
-            pass  # rơi xuống bộ nhận xét theo luật
+        except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
+            # Không ghi nội dung bài viết hay khóa API, chỉ ghi loại lỗi
+            logger.warning("Gemini lỗi (%s), chuyển sang bộ nhận xét theo luật", type(exc).__name__)
     return rule_based_feedback(kind, text), "rules"

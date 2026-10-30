@@ -70,10 +70,27 @@ backend/
   alembic/            # migration
   app/
     main.py config.py db.py models.py schemas.py security.py deps.py seed.py
-    routers/          # auth users classes attendance scores tuition reports coach
+    errors.py error_handlers.py logging_config.py pagination.py
+    routers/          # ENDPOINTS: chỉ lo HTTP + phân quyền (auth users classes attendance scores tuition reports coach)
+    crud/             # CRUD: toàn bộ truy vấn ORM/SQL (users classes attendance scores tuition coach)
     services/         # report.py (pandas), coach.py (AI)
-  tests/
+  tests/              # test_api.py (luồng chính) + test_extra.py (phân trang, PUT, lỗi, logging)
+docs/postman/         # Postman collection + environment để kiểm thử API
 ```
+
+Bốn lớp theo tài liệu môn học: `models.py` (bảng) → `schemas.py` (dữ liệu vào/ra) → `crud/` (thao tác CSDL) → `routers/` (endpoint).
+
+## Quy ước API
+
+- **Phân trang:** các danh sách (`/users`, `/students`, `/classes`, `/attendance`, `/scores`, `/tuition`) nhận `?skip=0&limit=100`
+  (`limit` tối đa 500). Tổng số bản ghi nằm ở header `X-Total-Count`. Giao diện dùng `api.getAll()` để tự lấy đủ các trang.
+- **PUT và PATCH:** `PATCH /classes/{id}` sửa một phần; `PUT /classes/{id}` thay thế toàn bộ (trường tùy chọn không gửi sẽ về rỗng).
+- **Lỗi:** luôn có dạng `{"detail": ...}`. Lỗi nghiệp vụ là các `AppError` trong `errors.py` (404, 409, 403...);
+  lỗi không lường trước trả `500` chung chung, chi tiết chỉ nằm trong log.
+- **Logging:** logger `hkii.*` ghi mỗi request kèm thời gian (cảnh báo nếu chậm hơn `SLOW_REQUEST_MS`, mặc định 500 ms),
+  đăng nhập sai/khóa tài khoản, lỗi Gemini. Không ghi mật khẩu, token, khóa API hay nội dung bài viết. Chỉnh bằng `LOG_LEVEL`.
+- **Postman:** import `docs/postman/HKII.postman_collection.json` và `HKII.local.postman_environment.json`,
+  chạy "Đăng nhập admin" trước (tự lưu token), rồi chạy cả collection bằng Collection Runner.
 
 ## Giao diện
 
