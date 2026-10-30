@@ -47,6 +47,8 @@ Tài khoản mẫu (mật khẩu `SEED_PASSWORD`, mặc định `Hkii@12345`; **
 
 ## Chạy test
 
+> Lần đầu sau khi cập nhật (thêm `python-multipart` vào `requirements.txt`) cần build lại image: `docker compose build api`.
+
 Test dùng SQLite riêng, không đụng PostgreSQL:
 
 ```bash
@@ -89,6 +91,13 @@ Bốn lớp theo tài liệu môn học: `models.py` (bảng) → `schemas.py` (
   lỗi không lường trước trả `500` chung chung, chi tiết chỉ nằm trong log.
 - **Logging:** logger `hkii.*` ghi mỗi request kèm thời gian (cảnh báo nếu chậm hơn `SLOW_REQUEST_MS`, mặc định 500 ms),
   đăng nhập sai/khóa tài khoản, lỗi Gemini. Không ghi mật khẩu, token, khóa API hay nội dung bài viết. Chỉnh bằng `LOG_LEVEL`.
+- **Đăng nhập trên Swagger:** mở http://localhost:8000/docs, bấm **Authorize**, nhập username/password. Nút này gọi `POST /auth/token` (chuẩn OAuth2, dạng form);
+  giao diện web dùng `POST /auth/login` (JSON). Cả hai dùng chung một hàm kiểm tra và cùng cơ chế khóa tài khoản.
+- **Việc chạy nền (`BackgroundTasks`):** sau khi trả kết quả `GET /tuition` và `GET /tuition/summary`, hệ thống tự đánh dấu quá hạn các khoản đã quá hạn
+  (tối đa mỗi `OVERDUE_REFRESH_SECONDS` giây một lần, mặc định 3600; tắt bằng `AUTO_OVERDUE_ENABLED=false`). Cũng chạy một lần khi khởi động.
+- **Nhập người dùng từ CSV (`UploadFile`):** `POST /users/import` (admin) nhận file `.csv` tối đa 1 MB, 100 dòng, cột `username, full_name, password, role`;
+  không tạo được `admin` bằng CSV. `GET /users/import/template` tải file mẫu. Xóa file CSV sau khi nhập vì có mật khẩu dạng chữ thường.
+- **Kiểm tra path parameter:** mọi mã trong đường dẫn (`/classes/{id}`...) phải là số nguyên dương, sai trả `422`.
 - **Postman:** import `docs/postman/HKII.postman_collection.json` và `HKII.local.postman_environment.json`,
   chạy "Đăng nhập admin" trước (tự lưu token), rồi chạy cả collection bằng Collection Runner.
 

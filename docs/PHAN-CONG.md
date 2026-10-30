@@ -27,9 +27,9 @@ File dùng chung (`models.py`, `schemas.py`, `seed.py`, `components/ui.jsx`): ai
 ## 3. Việc còn lại
 
 ### Thành viên A
-- [ ] Màn **đổi mật khẩu** trên giao diện (API `POST /auth/change-password` đã có)
-- [ ] Màn **liên kết phụ huynh với học viên** cho admin (API `POST /users/{id}/children` đã có)
-- [ ] Chức năng **sửa điểm** trên giao diện (API `PATCH /scores/{id}` đã có; nút xóa điểm đã có sẵn)
+- [x] Màn **đổi mật khẩu** trên giao diện (API `POST /auth/change-password` đã có) — `frontend/src/pages/Account.jsx`
+- [x] Màn **liên kết phụ huynh với học viên** cho admin (API `POST /users/{id}/children` đã có) — mục "Quản lý" trong trang Người dùng
+- [x] Chức năng **sửa điểm** trên giao diện (API `PATCH /scores/{id}` đã có; nút xóa điểm đã có sẵn) — tab Điểm số của lớp
 - [ ] Thêm test cho ghi danh vào lớp và quản lý người dùng
 - [ ] Vẽ lại sơ đồ ER và ma trận phân quyền bằng lời của nhóm (không chép nguyên từ slide)
 

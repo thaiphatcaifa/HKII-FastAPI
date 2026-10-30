@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     slow_request_ms: int = 500
 
+    # Tự động đánh dấu học phí quá hạn (chạy nền). Tương đương tuitionAutoOverdue của Firebase.
+    auto_overdue_enabled: bool = True
+    overdue_refresh_seconds: int = 3600
+
     cors_origins: str = "http://localhost:5173,http://localhost:8080"
 
     seed_on_start: bool = False

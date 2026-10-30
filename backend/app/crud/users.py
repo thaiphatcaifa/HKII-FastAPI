@@ -36,6 +36,13 @@ def create_user(db: Session, *, username: str, full_name: str, password_hash: st
     return user
 
 
+def create_users(db: Session, items: list[dict]) -> int:
+    """Tạo nhiều tài khoản, commit một lần. Mỗi item gồm username, full_name, password_hash, role."""
+    db.add_all([User(**item) for item in items])
+    db.commit()
+    return len(items)
+
+
 def update_user(
     db: Session,
     user: User,

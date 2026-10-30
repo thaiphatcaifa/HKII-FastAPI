@@ -12,6 +12,8 @@ class ORM(BaseModel):
 
 # ---------- Auth / User ----------
 class LoginIn(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{"username": "admin", "password": "Hkii@12345"}]})
+
     username: str = Field(min_length=1, max_length=64)
     password: str = Field(min_length=1, max_length=128)
 
@@ -24,9 +26,14 @@ class UserOut(ORM):
     is_active: bool
 
 
-class TokenOut(BaseModel):
+class OAuth2Token(BaseModel):
+    """Dạng trả về chuẩn của OAuth2 (dùng cho nút Authorize trên Swagger)."""
+
     access_token: str
     token_type: str = "bearer"
+
+
+class TokenOut(OAuth2Token):
     user: UserOut
 
 
@@ -36,6 +43,12 @@ class ChangePasswordIn(BaseModel):
 
 
 class UserCreate(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [{"username": "hv09", "full_name": "Nguyễn Văn An", "password": "MatKhau@123", "role": "student"}]
+        }
+    )
+
     username: str = Field(min_length=3, max_length=64, pattern=r"^[A-Za-z0-9_.-]+$")
     full_name: str = Field(min_length=1, max_length=120)
     password: str = Field(min_length=8, max_length=128)
@@ -55,6 +68,10 @@ class ChildLinkIn(BaseModel):
 
 # ---------- Class ----------
 class ClassCreate(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [{"code": "IELTS-C1", "name": "IELTS Advanced C1", "schedule": "T2-T4 18:00", "teacher_id": 2}]}
+    )
+
     code: str = Field(min_length=1, max_length=32)
     name: str = Field(min_length=1, max_length=120)
     schedule: str | None = Field(default=None, max_length=200)
@@ -122,6 +139,10 @@ class AttendanceSummary(BaseModel):
 
 # ---------- Score ----------
 class ScoreCreate(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [{"class_id": 1, "student_id": 4, "kind": "midterm", "value": 8.5, "max_value": 10}]}
+    )
+
     class_id: int
     student_id: int
     kind: str = Field(min_length=1, max_length=40)
@@ -153,6 +174,10 @@ class ScoreClassSummary(BaseModel):
 
 # ---------- Tuition ----------
 class TuitionCreate(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [{"student_id": 4, "class_id": 1, "amount": 1500000, "due_date": "2026-12-31"}]}
+    )
+
     student_id: int
     class_id: int | None = None
     amount: float = Field(gt=0)
@@ -180,6 +205,12 @@ class TuitionSummary(BaseModel):
 
 # ---------- Coach ----------
 class CoachIn(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [{"kind": "writing", "text": "I like learning English because it helps me talk with many people."}]
+        }
+    )
+
     kind: Literal["writing", "speaking"]
     text: str = Field(min_length=20, max_length=4000)
 
@@ -190,3 +221,16 @@ class CoachOut(ORM):
     feedback: str
     provider: str
     created_at: dt.datetime
+
+
+# ---------- Nhập người dùng từ CSV ----------
+class ImportRowError(BaseModel):
+    line: int
+    username: str | None = None
+    reason: str
+
+
+class ImportResult(BaseModel):
+    created: int
+    skipped: int
+    errors: list[ImportRowError]

@@ -16,6 +16,7 @@ from app.deps import (
 )
 from app.errors import BadRequestError, NotFoundError
 from app.models import Role, Score, User
+from app.params import IdPath
 from app.pagination import Page, page_params, set_total
 from app.schemas import ScoreClassSummary, ScoreCreate, ScoreOut, ScoreUpdate
 
@@ -76,7 +77,7 @@ def list_scores(
 
 @router.patch("/{score_id}", response_model=ScoreOut)
 def update_score(
-    score_id: int,
+    score_id: IdPath,
     data: ScoreUpdate,
     db: Session = Depends(get_db),
     user: User = Depends(staff),
@@ -88,7 +89,7 @@ def update_score(
 
 
 @router.delete("/{score_id}", status_code=204)
-def delete_score(score_id: int, db: Session = Depends(get_db), user: User = Depends(staff)):
+def delete_score(score_id: IdPath, db: Session = Depends(get_db), user: User = Depends(staff)):
     score = _load_score(db, score_id, user)
     crud.scores.delete_score(db, score)
     logger.info("%s xóa điểm id=%d", user.username, score_id)
@@ -96,7 +97,7 @@ def delete_score(score_id: int, db: Session = Depends(get_db), user: User = Depe
 
 @router.get("/student/{student_id}/summary", response_model=list[ScoreClassSummary])
 def student_summary(
-    student_id: int,
+    student_id: IdPath,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ):

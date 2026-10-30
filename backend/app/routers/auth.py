@@ -1,6 +1,8 @@
 import logging
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app import crud
@@ -9,22 +11,22 @@ from app.db import get_db
 from app.deps import current_user
 from app.errors import BadRequestError, LockedError, UnauthorizedError
 from app.models import User, as_utc, utcnow
-from app.schemas import ChangePasswordIn, LoginIn, TokenOut, UserOut
+from app.schemas import ChangePasswordIn, LoginIn, OAuth2Token, TokenOut, UserOut
 from app.security import create_access_token, hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger("hkii.auth")
 
 
-@router.post("/login", response_model=TokenOut)
-def login(data: LoginIn, db: Session = Depends(get_db)):
-    user = crud.users.get_by_username(db, data.username.strip())
+def authenticate(db: Session, username: str, password: str) -> User:
+    """Kiểm tra tên đăng nhập + mật khẩu, có khóa tạm khi sai nhiều lần. Dùng chung cho /login và /token."""
+    user = crud.users.get_by_username(db, username.strip())
 
     if user and user.locked_until and as_utc(user.locked_until) > utcnow():
         logger.warning("Từ chối đăng nhập: tài khoản %s đang bị khóa tạm", user.username)
         raise LockedError("Tài khoản đang bị khóa tạm thời. Vui lòng thử lại sau.")
 
-    ok = bool(user and user.is_active and verify_password(data.password, user.password_hash))
+    ok = bool(user and user.is_active and verify_password(password, user.password_hash))
     if not ok:
         if user:
             locked = crud.users.record_failed_login(db, user, settings.max_failed_logins, settings.lock_minutes)
@@ -38,7 +40,21 @@ def login(data: LoginIn, db: Session = Depends(get_db)):
 
     crud.users.reset_login_state(db, user)
     logger.info("Đăng nhập thành công: %s (%s)", user.username, user.role.value)
+    return user
+
+
+@router.post("/login", response_model=TokenOut)
+def login(data: LoginIn, db: Session = Depends(get_db)):
+    """Đăng nhập bằng JSON (giao diện web dùng endpoint này)."""
+    user = authenticate(db, data.username, data.password)
     return TokenOut(access_token=create_access_token(user), user=UserOut.model_validate(user))
+
+
+@router.post("/token", response_model=OAuth2Token)
+def login_for_swagger(form: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)):
+    """Đăng nhập chuẩn OAuth2 (form: username, password). Nút **Authorize** trên /docs gọi endpoint này."""
+    user = authenticate(db, form.username, form.password)
+    return OAuth2Token(access_token=create_access_token(user))
 
 
 @router.get("/me", response_model=UserOut)

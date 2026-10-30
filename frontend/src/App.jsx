@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth'
 import Layout from './components/Layout'
 import { Loading } from './components/ui'
+import Account from './pages/Account'
 import Attendance from './pages/Attendance'
 import ClassDetail from './pages/ClassDetail'
 import Classes from './pages/Classes'
@@ -32,6 +33,7 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="account" element={<Account />} />
         <Route
           path="classes"
           element={

@@ -172,6 +172,16 @@ PUT thay thế toàn bộ tài nguyên (`PUT /classes/{id}`), PATCH chỉ sửa 
 Lỗi nghiệp vụ là các `AppError` (`errors.py`) và luôn trả `{"detail": ...}`; lỗi bất ngờ trả `500` chung chung, chi tiết chỉ ghi vào log.
 Log ghi mỗi request kèm thời gian và cảnh báo request chậm, nhưng không ghi mật khẩu, token hay nội dung bài viết.
 
+**Nút Authorize trên Swagger hoạt động ra sao?**
+Dự án dùng `OAuth2PasswordBearer(tokenUrl="auth/token")`: Swagger gửi username/password dạng form tới `POST /auth/token`, nhận JWT rồi tự gắn vào mọi request.
+Giao diện web vẫn dùng `POST /auth/login` (JSON); hai endpoint dùng chung hàm `authenticate`.
+
+**`BackgroundTasks` dùng vào việc gì?**
+Tự động đánh dấu học phí quá hạn (thay cho `tuitionAutoOverdue` của Firebase). Sau khi trả kết quả xem học phí, FastAPI chạy việc nền này mà người dùng không phải chờ; có giới hạn tần suất để không quét CSDL ở mỗi request.
+
+**Nhập CSV bằng `UploadFile` có an toàn không?**
+Chỉ admin dùng được; giới hạn 1 MB và 100 dòng; kiểm tra từng dòng bằng chính schema `UserCreate`; không cho tạo admin; dòng lỗi hoặc trùng được liệt kê chứ không làm hỏng cả file. Hạn chế: mật khẩu nằm dạng chữ thường trong file nên phải xóa file sau khi nhập.
+
 **Bảo mật được làm thế nào?**
 Mật khẩu băm bcrypt; đăng nhập trả JWT (HS256, hết hạn sau 8 giờ); khóa tạm 15 phút sau 5 lần sai;
 thông báo lỗi đăng nhập gộp chung để không lộ tài khoản có tồn tại; phân quyền theo vai trò kiểm tra ở backend (`deps.py`),

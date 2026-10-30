@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.deps import ensure_can_manage_class, get_class_or_404, require_roles
 from app.models import Role, User
+from app.params import IdPath
 from app.services import report
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -14,7 +15,7 @@ XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 @router.get("/class/{class_id}/summary")
 def class_summary(
-    class_id: int,
+    class_id: IdPath,
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(Role.admin, Role.teacher)),
 ):
@@ -25,7 +26,7 @@ def class_summary(
 
 @router.get("/class/{class_id}/export.xlsx")
 def class_export(
-    class_id: int,
+    class_id: IdPath,
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(Role.admin, Role.teacher)),
 ):

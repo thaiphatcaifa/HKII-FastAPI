@@ -16,6 +16,7 @@ from app.deps import (
 )
 from app.errors import BadRequestError
 from app.models import Attendance, AttendanceStatus, Role, User
+from app.params import IdPath
 from app.pagination import Page, page_params, set_total
 from app.schemas import AttendanceBatchIn, AttendanceOut, AttendanceSummary
 
@@ -90,7 +91,7 @@ def list_attendance(
 
 @router.get("/summary/{student_id}", response_model=AttendanceSummary)
 def attendance_summary(
-    student_id: int,
+    student_id: IdPath,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ):

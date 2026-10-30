@@ -34,8 +34,9 @@ function messageFrom(detail, fallback) {
   return fallback
 }
 
-async function request(path, { method = 'GET', body, raw = false } = {}) {
+async function request(path, { method = 'GET', body, form, raw = false } = {}) {
   const headers = {}
+  // Với FormData (tải file lên) KHÔNG tự đặt Content-Type: trình duyệt sẽ thêm boundary
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (token) headers.Authorization = `Bearer ${token}`
 
@@ -44,7 +45,7 @@ async function request(path, { method = 'GET', body, raw = false } = {}) {
     res = await fetch(BASE + path, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: form !== undefined ? form : body !== undefined ? JSON.stringify(body) : undefined,
     })
   } catch {
     throw new ApiError(0, 'Không kết nối được máy chủ.')
@@ -84,6 +85,12 @@ async function getAll(path, pageSize = 200) {
 export const api = {
   get: (path) => request(path),
   getAll: (path) => getAll(path),
+  // Tải một file lên (multipart/form-data), tên trường là "file"
+  upload: (path, file) => {
+    const form = new FormData()
+    form.append('file', file)
+    return request(path, { method: 'POST', form })
+  },
   post: (path, body = {}) => request(path, { method: 'POST', body }),
   patch: (path, body = {}) => request(path, { method: 'PATCH', body }),
   del: (path) => request(path, { method: 'DELETE' }),

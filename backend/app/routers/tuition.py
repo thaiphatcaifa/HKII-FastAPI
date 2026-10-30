@@ -1,7 +1,7 @@
 import datetime as dt
 import logging
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, Response
 from sqlalchemy.orm import Session
 
 from app import crud
@@ -9,8 +9,10 @@ from app.db import get_db
 from app.deps import current_user, require_roles, visible_student_ids
 from app.errors import ConflictError, ForbiddenError, NotFoundError
 from app.models import Role, TuitionStatus, User
+from app.params import IdPath
 from app.pagination import Page, page_params, set_total
 from app.schemas import TuitionCreate, TuitionOut, TuitionSummary
+from app.services.tuition_jobs import refresh_overdue
 
 router = APIRouter(prefix="/tuition", tags=["tuition"])
 admin_only = require_roles(Role.admin)
@@ -37,6 +39,7 @@ def create_record(data: TuitionCreate, db: Session = Depends(get_db), admin: Use
 @router.get("", response_model=list[TuitionOut])
 def list_records(
     response: Response,
+    background_tasks: BackgroundTasks,
     student_id: int | None = None,
     status: TuitionStatus | None = None,
     page: Page = Depends(page_params),
@@ -45,6 +48,8 @@ def list_records(
 ):
     if user.role == Role.teacher:
         raise ForbiddenError("Giáo viên không xem học phí.")
+    # Việc nền: sau khi trả kết quả, tự đánh dấu quá hạn để lần xem sau luôn mới
+    background_tasks.add_task(refresh_overdue)
     items, total = crud.tuition.list_records(
         db,
         visible_ids=visible_student_ids(db, user),
@@ -58,7 +63,7 @@ def list_records(
 
 
 @router.post("/{record_id}/pay", response_model=TuitionOut)
-def mark_paid(record_id: int, db: Session = Depends(get_db), admin: User = Depends(admin_only)):
+def mark_paid(record_id: IdPath, db: Session = Depends(get_db), admin: User = Depends(admin_only)):
     record = crud.tuition.get_record(db, record_id)
     if record is None:
         raise NotFoundError("Không tìm thấy khoản học phí.")
@@ -78,7 +83,8 @@ def mark_overdue(db: Session = Depends(get_db), admin: User = Depends(admin_only
 
 
 @router.get("/summary", response_model=TuitionSummary)
-def summary(db: Session = Depends(get_db), _: User = Depends(admin_only)):
+def summary(background_tasks: BackgroundTasks, db: Session = Depends(get_db), _: User = Depends(admin_only)):
+    background_tasks.add_task(refresh_overdue)
     totals, counts = crud.tuition.totals_by_status(db)
     return TuitionSummary(
         unpaid=totals["unpaid"], paid=totals["paid"], overdue=totals["overdue"], count_by_status=counts

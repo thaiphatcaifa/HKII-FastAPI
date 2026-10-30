@@ -1,7 +1,7 @@
 """Xác thực + phân quyền. Thay cho database.rules.json của Firebase."""
 import jwt
 from fastapi import Depends
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app import crud
@@ -10,17 +10,19 @@ from app.errors import ForbiddenError, NotFoundError, UnauthorizedError
 from app.models import Classroom, Role, User
 from app.security import decode_access_token
 
-_bearer = HTTPBearer(auto_error=False)
+# tokenUrl trỏ tới /auth/token để nút Authorize trên Swagger (/docs) đăng nhập được.
+# auto_error=False để tự trả lỗi 401 theo dạng của dự án.
+_oauth2 = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
 
 
 def current_user(
-    creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    token: str | None = Depends(_oauth2),
     db: Session = Depends(get_db),
 ) -> User:
-    if creds is None:
+    if not token:
         raise UnauthorizedError()
     try:
-        payload = decode_access_token(creds.credentials)
+        payload = decode_access_token(token)
         user_id = int(payload["sub"])
     except (jwt.PyJWTError, KeyError, ValueError):
         raise UnauthorizedError()

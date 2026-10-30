@@ -14,6 +14,7 @@ from app.deps import (
 )
 from app.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
 from app.models import Role, User
+from app.params import IdPath
 from app.pagination import Page, page_params, set_total
 from app.schemas import ClassCreate, ClassOut, ClassReplace, ClassUpdate, EnrollIn, UserOut
 
@@ -59,7 +60,7 @@ def create_class(data: ClassCreate, db: Session = Depends(get_db), admin: User =
 
 
 @router.get("/{class_id}", response_model=ClassOut)
-def get_class(class_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def get_class(class_id: IdPath, db: Session = Depends(get_db), user: User = Depends(current_user)):
     classroom = get_class_or_404(db, class_id)
     if user.role == Role.admin:
         return classroom
@@ -74,7 +75,7 @@ def get_class(class_id: int, db: Session = Depends(get_db), user: User = Depends
 
 @router.put("/{class_id}", response_model=ClassOut)
 def replace_class(
-    class_id: int,
+    class_id: IdPath,
     data: ClassReplace,
     db: Session = Depends(get_db),
     admin: User = Depends(admin_only),
@@ -91,7 +92,7 @@ def replace_class(
 
 @router.patch("/{class_id}", response_model=ClassOut)
 def update_class(
-    class_id: int,
+    class_id: IdPath,
     data: ClassUpdate,
     db: Session = Depends(get_db),
     _: User = Depends(admin_only),
@@ -105,7 +106,7 @@ def update_class(
 
 @router.get("/{class_id}/students", response_model=list[UserOut])
 def list_class_students(
-    class_id: int,
+    class_id: IdPath,
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(Role.admin, Role.teacher)),
 ):
@@ -116,7 +117,7 @@ def list_class_students(
 
 @router.post("/{class_id}/students", status_code=201)
 def enroll_student(
-    class_id: int,
+    class_id: IdPath,
     data: EnrollIn,
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(Role.admin, Role.teacher)),
@@ -135,8 +136,8 @@ def enroll_student(
 
 @router.delete("/{class_id}/students/{student_id}", status_code=204)
 def remove_student(
-    class_id: int,
-    student_id: int,
+    class_id: IdPath,
+    student_id: IdPath,
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(Role.admin, Role.teacher)),
 ):

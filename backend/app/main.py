@@ -5,12 +5,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
+from starlette.concurrency import run_in_threadpool
 
 from app.config import settings
 from app.db import SessionLocal
 from app.error_handlers import register_exception_handlers
 from app.logging_config import setup_logging
 from app.routers import attendance, auth, classes, coach, reports, scores, tuition, users
+from app.services.tuition_jobs import refresh_overdue
 
 setup_logging()
 logger = logging.getLogger("hkii.app")
@@ -26,13 +28,33 @@ async def lifespan(_: FastAPI):
         with SessionLocal() as db:
             if seed_if_empty(db):
                 logger.info("Đã tạo dữ liệu mẫu")
+    if settings.auto_overdue_enabled:
+        await run_in_threadpool(refresh_overdue, True)  # quét học phí quá hạn một lần khi khởi động
     yield
     logger.info("Tắt HKII API")
 
 
+TAGS_METADATA = [
+    {"name": "auth", "description": "Đăng nhập (JSON hoặc OAuth2), thông tin tài khoản, đổi mật khẩu."},
+    {"name": "users", "description": "Quản lý người dùng (admin), liên kết phụ huynh - học viên, nhập từ CSV."},
+    {"name": "classes", "description": "Lớp học và ghi danh học viên."},
+    {"name": "attendance", "description": "Điểm danh theo ngày và thống kê chuyên cần."},
+    {"name": "scores", "description": "Nhập, sửa, xóa điểm và điểm trung bình theo lớp."},
+    {"name": "tuition", "description": "Học phí: tạo khoản thu, thanh toán, tự động đánh dấu quá hạn."},
+    {"name": "reports", "description": "Báo cáo lớp học và xuất file Excel."},
+    {"name": "coach", "description": "AI Coach nhận xét bài viết/bài nói (Gemini hoặc bộ nhận xét theo luật)."},
+    {"name": "system", "description": "Kiểm tra tình trạng hệ thống."},
+]
+
 app = FastAPI(
     title="HKII - Hệ thống quản lý trung tâm (FastAPI + PostgreSQL)",
-    version="0.2.0",
+    version="0.3.0",
+    description=(
+        "Backend của hệ thống quản lý trung tâm.\n\n"
+        "**Thử API trên trang này:** bấm **Authorize**, nhập username/password (tài khoản mẫu `admin`) rồi gọi các endpoint.\n\n"
+        "Các danh sách nhận `skip` và `limit`; tổng số bản ghi nằm ở header `X-Total-Count`."
+    ),
+    openapi_tags=TAGS_METADATA,
     lifespan=lifespan,
 )
 
@@ -73,8 +95,12 @@ async def log_requests(request: Request, call_next):
     return response
 
 
+COMMON_RESPONSES = {
+    401: {"description": "Chưa đăng nhập hoặc phiên đã hết hạn."},
+    403: {"description": "Không đủ quyền thực hiện thao tác này."},
+}
 for module in (auth, users, classes, attendance, scores, tuition, reports, coach):
-    app.include_router(module.router)
+    app.include_router(module.router, responses=COMMON_RESPONSES)
 
 
 @app.get("/health", tags=["system"])

@@ -6,6 +6,7 @@ os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 os.environ["GEMINI_API_KEY"] = ""
 os.environ["SEED_ON_START"] = "false"
 os.environ["SECRET_KEY"] = "test-secret"
+os.environ["AUTO_OVERDUE_ENABLED"] = "false"  # test học phí tự bật lại khi cần
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

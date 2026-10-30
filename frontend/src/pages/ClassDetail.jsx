@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Pencil } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { api, download } from '../api'
 import { useAuth } from '../auth'
@@ -248,6 +249,7 @@ function ScoresTab({ classId, students }) {
   const scores = useAsync(() => api.getAll(`/scores?class_id=${classId}`), [classId])
   const [form, setForm] = useState({ student_id: '', kind: 'quiz', value: '', max_value: '10' })
   const [error, setError] = useState('')
+  const [editing, setEditing] = useState(null) // { id, value, note } khi đang sửa một điểm
   const name = (id) => students.find((s) => s.id === id)?.full_name || `#${id}`
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
@@ -263,6 +265,17 @@ function ScoresTab({ classId, students }) {
         max_value: Number(form.max_value),
       })
       setForm({ ...form, value: '' })
+      scores.reload()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+  const saveEdit = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      await api.patch(`/scores/${editing.id}`, { value: Number(editing.value), note: editing.note.trim() })
+      setEditing(null)
       scores.reload()
     } catch (err) {
       setError(err.message)
@@ -315,26 +328,79 @@ function ScoresTab({ classId, students }) {
                 <th className="th">Học viên</th>
                 <th className="th">Loại</th>
                 <th className="th">Điểm</th>
+                <th className="th">Ghi chú</th>
                 <th className="th" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {(scores.data || []).map((s) => (
-                <tr key={s.id}>
-                  <td className="td"><NameCell name={name(s.student_id)} /></td>
-                  <td className="td">{s.kind}</td>
-                  <td className="td">
-                    {s.value} / {s.max_value}
-                  </td>
-                  <td className="td text-right">
-                    <button className="btn-ghost" onClick={() => remove(s.id)}>
-                      Xóa
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {(scores.data || []).map((s) =>
+                editing?.id === s.id ? (
+                  <tr key={s.id}>
+                    <td className="td"><NameCell name={name(s.student_id)} /></td>
+                    <td className="td">{s.kind}</td>
+                    <td className="td">
+                      <div className="flex items-center gap-2">
+                        <input
+                          className="input !w-24"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max={s.max_value}
+                          value={editing.value}
+                          onChange={(e) => setEditing({ ...editing, value: e.target.value })}
+                          aria-label="Điểm"
+                          required
+                        />
+                        <span className="text-slate-500">/ {s.max_value}</span>
+                      </div>
+                    </td>
+                    <td className="td">
+                      <input
+                        className="input"
+                        maxLength={300}
+                        value={editing.note}
+                        onChange={(e) => setEditing({ ...editing, note: e.target.value })}
+                        aria-label="Ghi chú"
+                      />
+                    </td>
+                    <td className="td text-right">
+                      <div className="flex justify-end gap-2">
+                        <button className="btn-primary btn-sm" onClick={saveEdit}>
+                          Lưu
+                        </button>
+                        <button type="button" className="btn-ghost btn-sm" onClick={() => setEditing(null)}>
+                          Hủy
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={s.id}>
+                    <td className="td"><NameCell name={name(s.student_id)} /></td>
+                    <td className="td">{s.kind}</td>
+                    <td className="td">
+                      {s.value} / {s.max_value}
+                    </td>
+                    <td className="td text-slate-500">{s.note || '—'}</td>
+                    <td className="td text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          className="btn-ghost"
+                          onClick={() => setEditing({ id: s.id, value: String(s.value), note: s.note || '' })}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Sửa
+                        </button>
+                        <button className="btn-ghost" onClick={() => remove(s.id)}>
+                          Xóa
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ),
+              )}
               {(scores.data || []).length === 0 && (
-                <EmptyRow cols={4}>Chưa có điểm nào.</EmptyRow>
+                <EmptyRow cols={5}>Chưa có điểm nào.</EmptyRow>
               )}
             </tbody>
           </table>
@@ -410,6 +476,63 @@ function ReportTab({ classId, code }) {
   )
 }
 
+// ---------- Sửa thông tin lớp (admin) - API: PATCH /classes/{id} ----------
+function EditClass({ classroom, onSaved, onCancel }) {
+  const teachers = useAsync(() => api.getAll('/users?role=teacher'), [])
+  const [form, setForm] = useState({
+    name: classroom.name,
+    schedule: classroom.schedule || '',
+    teacher_id: classroom.teacher_id ?? '',
+  })
+  const [error, setError] = useState('')
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
+
+  const save = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      await api.patch(`/classes/${classroom.id}`, {
+        name: form.name.trim(),
+        schedule: form.schedule.trim() || null,
+        teacher_id: form.teacher_id === '' ? null : Number(form.teacher_id),
+      })
+      onSaved()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  return (
+    <form onSubmit={save} className="card mb-6 grid gap-3 sm:grid-cols-4">
+      <Field label="Tên lớp">
+        <input className="input" value={form.name} onChange={set('name')} maxLength={120} required />
+      </Field>
+      <Field label="Lịch học">
+        <input className="input" value={form.schedule} onChange={set('schedule')} maxLength={200} />
+      </Field>
+      <Field label="Giáo viên phụ trách">
+        <select className="input" value={form.teacher_id} onChange={set('teacher_id')}>
+          <option value="">— Chưa phân công —</option>
+          {(teachers.data || []).map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.full_name}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <div className="flex items-end gap-2">
+        <button className="btn-primary flex-1">Lưu</button>
+        <button type="button" className="btn-ghost" onClick={onCancel}>
+          Hủy
+        </button>
+      </div>
+      <div className="sm:col-span-4">
+        <ErrorBox message={error || teachers.error} />
+      </div>
+    </form>
+  )
+}
+
 const TABS = [
   ['students', 'Học viên'],
   ['attendance', 'Điểm danh'],
@@ -419,7 +542,9 @@ const TABS = [
 
 export default function ClassDetail() {
   const { id } = useParams()
+  const { user } = useAuth()
   const [tab, setTab] = useState('students')
+  const [editingClass, setEditingClass] = useState(false)
   const { data, error, loading, reload } = useAsync(async () => {
     const [classroom, students] = await Promise.all([
       api.get(`/classes/${id}`),
@@ -434,7 +559,24 @@ export default function ClassDetail() {
 
   return (
     <>
-      <PageTitle title={classroom.name} subtitle={`${classroom.code} · ${classroom.schedule || 'Chưa có lịch học'}`} />
+      <PageTitle title={classroom.name} subtitle={`${classroom.code} · ${classroom.schedule || 'Chưa có lịch học'}`}>
+        {user.role === 'admin' && !editingClass && (
+          <button className="btn-ghost" onClick={() => setEditingClass(true)}>
+            <Pencil className="h-4 w-4" />
+            Sửa thông tin lớp
+          </button>
+        )}
+      </PageTitle>
+      {editingClass && (
+        <EditClass
+          classroom={classroom}
+          onSaved={() => {
+            setEditingClass(false)
+            reload()
+          }}
+          onCancel={() => setEditingClass(false)}
+        />
+      )}
       <div className="mb-6 inline-flex max-w-full gap-1 overflow-x-auto rounded-xl bg-slate-200/60 p-1" role="tablist">
         {TABS.map(([key, label]) => (
           <button

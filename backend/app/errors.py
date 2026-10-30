@@ -49,3 +49,8 @@ class LockedError(AppError):
 class TooManyRequestsError(AppError):
     status_code = 429
     default_detail = "Bạn thao tác quá nhiều lần, vui lòng thử lại sau."
+
+
+class PayloadTooLargeError(AppError):
+    status_code = 413
+    default_detail = "Dữ liệu gửi lên quá lớn."
