@@ -72,23 +72,23 @@ Sửa code backend hoặc frontend xong thì chạy lại `docker compose up -d 
 
 ### 1.6 Chạy test
 
-Test dùng SQLite riêng, **không đụng PostgreSQL** (46 test):
+Test dùng SQLite riêng, **không đụng PostgreSQL** (62 test):
 
 ```bash
 docker compose run --rm --no-deps api python -m pytest -q
 ```
 
-Kết quả mong đợi: `46 passed`. Test mất khoảng 1 phút vì băm mật khẩu bcrypt cho dữ liệu mẫu ở mỗi test.
+Kết quả mong đợi: `62 passed`. Test mất khoảng 1 phút vì băm mật khẩu bcrypt cho dữ liệu mẫu ở mỗi test.
 
-### 1.7 Bật AI Coach bằng Gemini (tùy chọn)
+### 1.7 Bật Gemini cho AI Coach và AI hỗ trợ giáo viên (tùy chọn)
 
-Không cần key vẫn chạy (bộ nhận xét theo luật). Muốn dùng Gemini, điền vào `.env`:
+Không cần key vẫn chạy (bộ chấm và bộ soạn theo luật). Muốn dùng Gemini, điền vào `.env`:
 
 ```
 GEMINI_API_KEY=khoa_cua_ban
 ```
 
-rồi `docker compose up -d --build`. **Không commit file `.env`** (đã nằm trong `.gitignore`). Nếu Gemini lỗi, hệ thống tự rơi về bộ nhận xét theo luật.
+rồi `docker compose up -d --build`. **Không commit file `.env`** (đã nằm trong `.gitignore`). Nếu Gemini lỗi hoặc trả sai định dạng, hệ thống tự rơi về bộ theo luật; nguyên nhân (chỉ loại lỗi, không có nội dung bài) nằm trong log `hkii.coach` / `hkii.ai`.
 
 ### 1.8 Chạy riêng giao diện để phát triển (tùy chọn)
 
@@ -140,8 +140,8 @@ Chuẩn bị trước: chạy `docker compose up -d` ít nhất 1 phút trước
 | 1:30–2:30 | Tab **Điểm số** → thêm một điểm. Tab **Báo cáo** → bấm **Xuất Excel** | "Báo cáo tính bằng Python (pandas) từ PostgreSQL: chuyên cần và điểm trung bình thang 10." |
 | 2:30–3:15 | Đăng xuất, đăng nhập **`ph.an`** → xem **Chuyên cần**, **Điểm số** của con | "Phụ huynh chỉ xem được con mình. Thử truy cập con của người khác sẽ bị chặn 403." |
 | 3:15–4:00 | Đăng nhập **`admin`** → **Học phí**: tạo khoản, **Đánh dấu quá hạn**, **Ghi nhận đã đóng** | "Học phí chỉ admin quản lý. Giáo viên không xem được học phí." |
-| 4:00–4:40 | Đăng nhập **`hv01`** → **AI Coach**: dán đoạn văn tiếng Anh → **Nhận xét** | "Có Gemini thì dùng Gemini; không có key hoặc lỗi thì tự chuyển sang bộ nhận xét theo luật. Giới hạn 20 lượt/ngày." |
-| 4:40–5:00 | Mở http://localhost:8000/docs, bấm thử `/health` | "API tự sinh tài liệu OpenAPI. Toàn bộ backend có 46 test tự động." |
+| 4:00–4:40 | Đăng nhập **`hv01`** → **AI Coach**: dán đoạn văn có vài lỗi (ví dụ `i like a apple. I read the the book.`) → **Chấm bài**; nộp thêm một bài để thấy biểu đồ tiến bộ | "Kết quả có điểm từng tiêu chí và lỗi kèm câu sửa. Có Gemini thì Gemini chấm; không có key hoặc lỗi thì tự chuyển sang bộ luật, chỉ ước lượng và không chấm ngữ pháp. Giới hạn 20 lượt/ngày." |
+| 4:40–5:00 | Mở http://localhost:8000/docs, bấm thử `/health` | "API tự sinh tài liệu OpenAPI. Toàn bộ backend có 62 test tự động." |
 
 **Demo mở rộng (nếu còn thời gian): AI hỗ trợ giáo viên** — đăng nhập **`gv.lan`**, mở lớp **IELTS-A1**:
 
@@ -209,8 +209,17 @@ API không giữ trạng thái (xác thực bằng JWT), nên có thể chạy n
 PostgreSQL có thể chuyển sang dịch vụ quản lý.
 
 **AI Coach hoạt động ra sao?**
-Gửi bài viết/bài nói (dạng văn bản) lên `/coach/feedback`. Nếu có `GEMINI_API_KEY` thì gọi Gemini; nếu không có hoặc lỗi thì
-dùng bộ nhận xét theo luật (đếm từ, độ dài câu, từ lặp…). Lịch sử lưu trong bảng `coach_sessions`, mỗi người tối đa 20 lượt/ngày.
+Gửi bài viết/bài nói (dạng văn bản) lên `/coach/feedback` và nhận về điểm 0-10 cho 4 tiêu chí (ngữ pháp, từ vựng, mạch lạc, triển khai ý),
+danh sách lỗi kèm câu sửa và 2 gợi ý. Nếu có `GEMINI_API_KEY` thì Gemini chấm và trả JSON; nếu không có hoặc lỗi thì dùng bộ chấm theo luật.
+Mỗi lượt được lưu trong bảng `coach_sessions` (cột `analysis` dạng JSON và `overall`), mỗi người tối đa 20 lượt/ngày; `/coach/progress` trả điểm tổng theo thời gian để vẽ biểu đồ.
+
+**Làm sao tin được kết quả Gemini trả về?**
+Không tin mù quáng: backend kiểm tra bằng Pydantic (`CoachAnalysis`), ép điểm về 0-10, bỏ tiêu chí lạ, và loại mọi "lỗi" có đoạn trích không nằm trong bài của học viên
+(chống Gemini bịa). Nếu JSON hỏng hoặc thiếu điểm thì tự rơi về bộ chấm theo luật. Lời nhắc cũng dặn bỏ qua mệnh lệnh nằm trong bài để giảm rủi ro "prompt injection".
+
+**Bộ chấm theo luật chấm được gì, không chấm được gì?**
+Chỉ ước lượng từ vựng (độ đa dạng, từ lặp), mạch lạc (độ dài câu, từ nối) và triển khai ý (số từ); **không chấm ngữ pháp** vì luật không hiểu được ngữ pháp.
+Nó chỉ báo vài lỗi gần như chắc chắn: viết thường `i`, `a`/`an`, từ lặp liền nhau, chữ đầu câu. Điểm theo luật được tô màu khác trên biểu đồ để không bị nhầm với điểm của Gemini.
 
 **AI hỗ trợ giáo viên khác AI Coach ở điểm nào?**
 AI Coach dành cho học viên luyện viết/nói. Phần mới dành cho giáo viên và gồm hai tính năng, cùng dùng lớp `services/gemini.py`:

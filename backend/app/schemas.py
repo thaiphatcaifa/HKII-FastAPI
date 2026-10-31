@@ -1,7 +1,7 @@
 import datetime as dt
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models import AiNoteStatus, AttendanceStatus, Role, TuitionStatus
 
@@ -215,12 +215,65 @@ class CoachIn(BaseModel):
     text: str = Field(min_length=20, max_length=4000)
 
 
+COACH_CRITERIA = ("grammar", "vocabulary", "coherence", "development")  # tiêu chí chấm, thang 0-10
+
+
+class CoachErrorItem(BaseModel):
+    original: str  # đoạn trích nguyên văn trong bài
+    corrected: str
+    explanation: str = ""
+
+
+class CoachAnalysis(BaseModel):
+    """Kết quả chấm có cấu trúc. Dùng chung để kiểm tra dữ liệu Gemini trả về và để trả ra API."""
+
+    scores: dict[str, float]
+    errors: list[CoachErrorItem] = Field(default_factory=list)
+    strengths: str = ""
+    tips: list[str] = Field(default_factory=list)
+
+    @field_validator("scores")
+    @classmethod
+    def _clean_scores(cls, value: dict[str, float]) -> dict[str, float]:
+        cleaned = {k: round(min(max(v, 0.0), 10.0), 1) for k, v in value.items() if k in COACH_CRITERIA}
+        if not cleaned:
+            raise ValueError("Không có điểm tiêu chí hợp lệ.")
+        return cleaned
+
+    @field_validator("errors")
+    @classmethod
+    def _cap_errors(cls, value: list[CoachErrorItem]) -> list[CoachErrorItem]:
+        return value[:8]
+
+    @field_validator("tips")
+    @classmethod
+    def _clean_tips(cls, value: list[str]) -> list[str]:
+        return [t.strip() for t in value if t and t.strip()][:3]
+
+
 class CoachOut(ORM):
     id: int
     kind: str
-    feedback: str
+    feedback: str  # bản chữ của nhận xét (giữ cho các lượt cũ chưa có analysis)
     provider: str
+    overall: float | None = None
+    analysis: CoachAnalysis | None = None
     created_at: dt.datetime
+
+
+class CoachPoint(BaseModel):
+    id: int
+    kind: str
+    provider: str
+    overall: float
+    scores: dict[str, float]
+    created_at: dt.datetime
+
+
+class CoachProgressOut(BaseModel):
+    points: list[CoachPoint]  # cũ -> mới, chỉ gồm các lượt có điểm
+    average: float | None
+    best: float | None
 
 
 # ---------- AI: cảnh báo rủi ro + nhận xét học viên ----------

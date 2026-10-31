@@ -19,7 +19,7 @@ Database + Cloud Functions) bằng **FastAPI**, **PostgreSQL** và **Docker**. P
 | 2 | Lớp học và học viên | `/classes`, `/classes/{id}/students` |
 | 3 | Điểm danh và điểm số (+ báo cáo) | `/attendance/batch`, `/attendance/summary/{id}`, `/scores`, `/reports/class/{id}/summary`, `/reports/class/{id}/export.xlsx` |
 | 4 | Học phí | `/tuition`, `/tuition/{id}/pay`, `/tuition/mark-overdue`, `/tuition/summary` |
-| 5 | AI Coach | `/coach/feedback`, `/coach/history` |
+| 5 | AI Coach (chấm theo tiêu chí, sửa lỗi, theo dõi tiến bộ) | `/coach/feedback`, `/coach/history`, `/coach/progress` |
 | + | AI hỗ trợ giáo viên (cảnh báo rủi ro + nhận xét học viên) | `/ai/risk`, `/ai/risk/advice`, `/ai/reviews`, `/ai/reviews/{id}/publish` |
 
 Vai trò: `admin`, `teacher`, `student`, `parent`. Quyền được kiểm tra ở `backend/app/deps.py`
@@ -58,8 +58,16 @@ docker compose run --rm --no-deps api python -m pytest -q
 
 ## AI Coach
 
-Không cần key vẫn chạy (bộ nhận xét theo luật, `provider = "rules"`). Muốn dùng Gemini thật,
-đặt `GEMINI_API_KEY` trong `.env`; nếu gọi lỗi, hệ thống tự rơi về bộ nhận xét theo luật.
+Học viên nộp bài viết hoặc bài nói (dạng văn bản) và nhận kết quả **có cấu trúc** (`POST /coach/feedback`):
+điểm 0-10 cho từng tiêu chí (ngữ pháp, từ vựng, mạch lạc, triển khai ý), điểm tổng, danh sách lỗi kèm câu sửa và 2 gợi ý.
+Điểm tổng của các lượt được lưu để vẽ **biểu đồ tiến bộ** (`GET /coach/progress`, trang AI Coach).
+
+- **Có `GEMINI_API_KEY`:** Gemini trả JSON (`responseMimeType: application/json`), backend kiểm tra lại bằng Pydantic (`CoachAnalysis`),
+  ép điểm về 0-10, bỏ tiêu chí lạ và **loại các lỗi "bịa"** (đoạn trích không có trong bài). Lời nhắc dặn bỏ qua mệnh lệnh nằm trong bài.
+- **Không có key, Gemini lỗi hoặc trả sai định dạng:** dùng bộ chấm theo luật (`provider = "rules"`). Bộ luật chỉ **ước lượng** 3 tiêu chí đo được
+  (từ vựng, mạch lạc, triển khai ý), **không chấm ngữ pháp**, và chỉ bắt vài lỗi chắc chắn: viết thường `i`, `a`/`an`, từ lặp liền nhau, chữ đầu câu.
+  Điểm theo luật được đánh dấu riêng trên biểu đồ vì không so sánh trực tiếp với điểm của Gemini.
+- Mỗi người tối đa `coach_daily_limit` (20) lượt/ngày. Bài viết của học viên được gửi tới Google khi bật Gemini nên giao diện nhắc không dán thông tin cá nhân.
 
 ## AI hỗ trợ giáo viên
 
@@ -90,8 +98,8 @@ backend/
     errors.py error_handlers.py logging_config.py pagination.py
     routers/          # ENDPOINTS: chỉ lo HTTP + phân quyền (auth users classes attendance scores tuition reports coach ai)
     crud/             # CRUD: toàn bộ truy vấn ORM/SQL (users classes attendance scores tuition coach ai_notes)
-    services/         # report.py (pandas), gemini.py (gọi Gemini + dự phòng), coach.py, insights.py (luật rủi ro), insights_ai.py (AI soạn nháp)
-  tests/              # test_api.py (luồng chính) + test_extra.py (phân trang, PUT, lỗi, logging) + test_ai.py (AI hỗ trợ giáo viên)
+    services/         # report.py (pandas), gemini.py (gọi Gemini + dự phòng), coach.py (chấm bài), insights.py (luật rủi ro), insights_ai.py (AI soạn nháp)
+  tests/              # test_api.py (luồng chính) + test_extra.py (phân trang, PUT, lỗi, logging) + test_ai.py (AI hỗ trợ giáo viên) + test_coach.py (AI Coach)
 docs/postman/         # Postman collection + environment để kiểm thử API
 ```
 

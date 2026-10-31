@@ -1182,7 +1182,7 @@
       "name": "7. AI Coach (Buổi 10–11)",
       "item": [
         {
-          "name": "Nhận xét bài viết",
+          "name": "Chấm bài viết (điểm tiêu chí, lỗi kèm câu sửa)",
           "request": {
             "method": "POST",
             "header": [
@@ -1203,7 +1203,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"kind\": \"writing\",\n  \"text\": \"I like learning English because it helps me talk with many people around the world.\"\n}",
+              "raw": "{\n  \"kind\": \"writing\",\n  \"text\": \"i like a apple. I read the the book every day. my friend likes english because it is useful for work.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1218,7 +1218,11 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
-                  "pm.test(\"provider là gemini hoặc rules\", () => pm.expect([\"gemini\", \"rules\"]).to.include(pm.response.json().provider));"
+                  "const body = pm.response.json();",
+                  "pm.test(\"provider là gemini hoặc rules\", () => pm.expect([\"gemini\", \"rules\"]).to.include(body.provider));",
+                  "pm.test(\"Có điểm tổng 0-10\", () => pm.expect(body.overall).to.be.within(0, 10));",
+                  "pm.test(\"Có điểm theo tiêu chí\", () => pm.expect(Object.keys(body.analysis.scores).length).to.be.above(0));",
+                  "pm.test(\"Có danh sách lỗi và gợi ý\", () => { pm.expect(body.analysis.errors).to.be.an(\"array\"); pm.expect(body.analysis.tips).to.be.an(\"array\"); });"
                 ]
               }
             }
@@ -1253,6 +1257,43 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tiến bộ AI Coach (điểm tổng theo thời gian)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/coach/progress?limit=30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "coach",
+                "progress"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "30"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const p = pm.response.json();",
+                  "pm.test(\"points là mảng, cũ -> mới\", () => { pm.expect(p.points).to.be.an(\"array\"); for (let i = 1; i < p.points.length; i++) pm.expect(p.points[i].id).to.be.above(p.points[i - 1].id); });",
+                  "pm.test(\"best >= average\", () => { if (p.points.length) pm.expect(p.best).to.be.at.least(p.average); });"
                 ]
               }
             }

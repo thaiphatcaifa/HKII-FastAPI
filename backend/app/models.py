@@ -8,8 +8,10 @@ from decimal import Decimal
 from sqlalchemy import (
     Boolean,
     Date,
+    JSON,
     DateTime,
     Enum,
+    Float,
     ForeignKey,
     Integer,
     Numeric,
@@ -168,6 +170,9 @@ class CoachSession(Base):
     input_text: Mapped[str] = mapped_column(Text)
     feedback: Mapped[str] = mapped_column(Text)
     provider: Mapped[str] = mapped_column(String(32))  # gemini | rules
+    # Kết quả có cấu trúc: điểm từng tiêu chí, lỗi kèm câu sửa, gợi ý. NULL ở các lượt cũ.
+    analysis: Mapped[dict | None] = mapped_column(JSON)
+    overall: Mapped[float | None] = mapped_column(Float)  # điểm tổng thang 10, dùng vẽ biểu đồ tiến bộ
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
 
 

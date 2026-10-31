@@ -272,15 +272,3 @@ def test_gemini_error_falls_back_to_rules(client, admin, teacher, monkeypatch):
 
     monkeypatch.setattr(gemini, "generate_text", lambda prompt, timeout=30: "")  # Gemini trả rỗng
     assert client.post("/ai/risk/advice", json=body, headers=teacher).json()["provider"] == "rules"
-
-
-def test_coach_uses_shared_gemini_client(client, student, monkeypatch):
-    monkeypatch.setattr(settings, "gemini_api_key", "khoa-gia")
-    monkeypatch.setattr(gemini, "generate_text", lambda prompt, timeout=30: "Bài viết rõ ràng, cần thêm ví dụ.")
-    r = client.post(
-        "/coach/feedback",
-        json={"kind": "writing", "text": "I like learning English because it helps me talk with many people."},
-        headers=student,
-    )
-    assert r.status_code == 201, r.text
-    assert r.json()["provider"] == "gemini"

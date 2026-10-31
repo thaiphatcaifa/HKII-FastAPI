@@ -42,7 +42,7 @@ TAGS_METADATA = [
     {"name": "scores", "description": "Nhập, sửa, xóa điểm và điểm trung bình theo lớp."},
     {"name": "tuition", "description": "Học phí: tạo khoản thu, thanh toán, tự động đánh dấu quá hạn."},
     {"name": "reports", "description": "Báo cáo lớp học và xuất file Excel."},
-    {"name": "coach", "description": "AI Coach nhận xét bài viết/bài nói (Gemini hoặc bộ nhận xét theo luật)."},
+    {"name": "coach", "description": "AI Coach chấm bài viết/bài nói theo tiêu chí, chỉ lỗi kèm câu sửa và theo dõi tiến bộ (Gemini hoặc bộ chấm theo luật)."},
     {"name": "ai", "description": "AI hỗ trợ giáo viên: cảnh báo học viên rủi ro (luật + gợi ý AI) và nhận xét học viên (AI soạn nháp, giáo viên duyệt)."},
     {"name": "system", "description": "Kiểm tra tình trạng hệ thống."},
 ]
