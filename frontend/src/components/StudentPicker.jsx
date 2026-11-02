@@ -4,7 +4,7 @@ import { useAsync } from './ui'
 
 // Học viên: chính mình. Phụ huynh: danh sách các con (API /students tự giới hạn theo vai trò).
 export function useStudentChoice() {
-  const students = useAsync(() => api.get('/students'), [])
+  const students = useAsync(() => api.getAll('/students'), [])
   const [picked, setPicked] = useState(null)
   const list = students.data || []
   const studentId = picked ?? list[0]?.id ?? null

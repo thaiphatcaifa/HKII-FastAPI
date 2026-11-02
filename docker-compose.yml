@@ -24,9 +24,12 @@ services:
       SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      AI_DAILY_LIMIT: ${AI_DAILY_LIMIT:-30}
       SEED_ON_START: ${SEED_ON_START:-true}
       SEED_PASSWORD: ${SEED_PASSWORD:-Hkii@12345}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8080}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SLOW_REQUEST_MS: ${SLOW_REQUEST_MS:-500}
     depends_on:
       db:
         condition: service_healthy

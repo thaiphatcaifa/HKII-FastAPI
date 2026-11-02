@@ -72,23 +72,23 @@ Sửa code backend hoặc frontend xong thì chạy lại `docker compose up -d 
 
 ### 1.6 Chạy test
 
-Test dùng SQLite riêng, **không đụng PostgreSQL** (15 test):
+Test dùng SQLite riêng, **không đụng PostgreSQL** (62 test):
 
 ```bash
 docker compose run --rm --no-deps api python -m pytest -q
 ```
 
-Kết quả mong đợi: `15 passed`. Test mất khoảng 1 phút vì băm mật khẩu bcrypt cho dữ liệu mẫu ở mỗi test.
+Kết quả mong đợi: `62 passed`. Test mất khoảng 1 phút vì băm mật khẩu bcrypt cho dữ liệu mẫu ở mỗi test.
 
-### 1.7 Bật AI Coach bằng Gemini (tùy chọn)
+### 1.7 Bật Gemini cho AI Coach và AI hỗ trợ giáo viên (tùy chọn)
 
-Không cần key vẫn chạy (bộ nhận xét theo luật). Muốn dùng Gemini, điền vào `.env`:
+Không cần key vẫn chạy (bộ chấm và bộ soạn theo luật). Muốn dùng Gemini, điền vào `.env`:
 
 ```
 GEMINI_API_KEY=khoa_cua_ban
 ```
 
-rồi `docker compose up -d --build`. **Không commit file `.env`** (đã nằm trong `.gitignore`). Nếu Gemini lỗi, hệ thống tự rơi về bộ nhận xét theo luật.
+rồi `docker compose up -d --build`. **Không commit file `.env`** (đã nằm trong `.gitignore`). Nếu Gemini lỗi hoặc trả sai định dạng, hệ thống tự rơi về bộ theo luật; nguyên nhân (chỉ loại lỗi, không có nội dung bài) nằm trong log `hkii.coach` / `hkii.ai`.
 
 ### 1.8 Chạy riêng giao diện để phát triển (tùy chọn)
 
@@ -140,8 +140,15 @@ Chuẩn bị trước: chạy `docker compose up -d` ít nhất 1 phút trước
 | 1:30–2:30 | Tab **Điểm số** → thêm một điểm. Tab **Báo cáo** → bấm **Xuất Excel** | "Báo cáo tính bằng Python (pandas) từ PostgreSQL: chuyên cần và điểm trung bình thang 10." |
 | 2:30–3:15 | Đăng xuất, đăng nhập **`ph.an`** → xem **Chuyên cần**, **Điểm số** của con | "Phụ huynh chỉ xem được con mình. Thử truy cập con của người khác sẽ bị chặn 403." |
 | 3:15–4:00 | Đăng nhập **`admin`** → **Học phí**: tạo khoản, **Đánh dấu quá hạn**, **Ghi nhận đã đóng** | "Học phí chỉ admin quản lý. Giáo viên không xem được học phí." |
-| 4:00–4:40 | Đăng nhập **`hv01`** → **AI Coach**: dán đoạn văn tiếng Anh → **Nhận xét** | "Có Gemini thì dùng Gemini; không có key hoặc lỗi thì tự chuyển sang bộ nhận xét theo luật. Giới hạn 20 lượt/ngày." |
-| 4:40–5:00 | Mở http://localhost:8000/docs, bấm thử `/health` | "API tự sinh tài liệu OpenAPI. Toàn bộ backend có 15 test tự động." |
+| 4:00–4:40 | Đăng nhập **`hv01`** → **AI Coach**: dán đoạn văn có vài lỗi (ví dụ `i like a apple. I read the the book.`) → **Chấm bài**; nộp thêm một bài để thấy biểu đồ tiến bộ | "Kết quả có điểm từng tiêu chí và lỗi kèm câu sửa. Có Gemini thì Gemini chấm; không có key hoặc lỗi thì tự chuyển sang bộ luật, chỉ ước lượng và không chấm ngữ pháp. Giới hạn 20 lượt/ngày." |
+| 4:40–5:00 | Mở http://localhost:8000/docs, bấm thử `/health` | "API tự sinh tài liệu OpenAPI. Toàn bộ backend có 62 test tự động." |
+
+**Demo mở rộng (nếu còn thời gian): AI hỗ trợ giáo viên** — đăng nhập **`gv.lan`**, mở lớp **IELTS-A1**:
+
+1. Tab **Cảnh báo**: danh sách học viên xếp theo mức rủi ro, mỗi người có lý do cụ thể. Bấm **Gợi ý hành động** ở một học viên rủi ro. *Nói:* "Mức rủi ro tính bằng luật nên giải thích được; AI chỉ gợi ý việc nên làm và không nhận tên học viên."
+2. Tab **Nhận xét AI**: chọn học viên → **AI soạn nháp** → **Sửa** vài chữ → **Công bố**. *Nói:* "AI chỉ soạn nháp, giáo viên duyệt rồi mới công bố."
+3. Đăng xuất, đăng nhập **`ph.an`** (con là `hv01`): trang **Tổng quan** hiện thẻ **Nhận xét của giáo viên**. Nếu giáo viên chưa công bố thì phụ huynh không thấy gì.
+4. Quay lại giáo viên, bấm **Thu hồi**: thẻ biến mất ở phía phụ huynh.
 
 **Phương án dự phòng nếu demo hỏng:** dùng ảnh chụp màn hình trong slide (slide 8–12) và mở Swagger để minh họa API.
 
@@ -156,6 +163,31 @@ Python cũng thuận lợi cho phần AI và báo cáo (pandas).
 **Vì sao PostgreSQL mà không dùng Firebase Realtime Database như hệ thống cũ?**
 Dữ liệu có quan hệ rõ ràng (lớp – học viên nhiều-nhiều, điểm danh, điểm số, học phí), cần khóa ngoại, ràng buộc duy nhất,
 giao dịch (ACID) và truy vấn tổng hợp bằng SQL cho báo cáo. Cây JSON của RTDB phải dựng thủ công những thứ này.
+
+**Vì sao tách `crud/` khỏi `routers/`?**
+Router chỉ nhận request, kiểm tra quyền và trả lỗi HTTP; `crud/` giữ toàn bộ truy vấn CSDL. Nhờ vậy một câu truy vấn chỉ viết ở một nơi,
+dễ test và dễ đổi CSDL; đúng 4 lớp `models, schemas, crud, endpoints` của tài liệu môn học.
+
+**Phân trang làm thế nào?**
+Các danh sách nhận `skip` và `limit` (mặc định 100, tối đa 500); tổng số bản ghi trả qua header `X-Total-Count`.
+Giao diện dùng `api.getAll()` gọi lần lượt các trang cho tới khi đủ.
+
+**Khác nhau giữa PUT và PATCH?**
+PUT thay thế toàn bộ tài nguyên (`PUT /classes/{id}`), PATCH chỉ sửa các trường được gửi (`PATCH /classes/{id}`).
+
+**Lỗi và log được xử lý ra sao?**
+Lỗi nghiệp vụ là các `AppError` (`errors.py`) và luôn trả `{"detail": ...}`; lỗi bất ngờ trả `500` chung chung, chi tiết chỉ ghi vào log.
+Log ghi mỗi request kèm thời gian và cảnh báo request chậm, nhưng không ghi mật khẩu, token hay nội dung bài viết.
+
+**Nút Authorize trên Swagger hoạt động ra sao?**
+Dự án dùng `OAuth2PasswordBearer(tokenUrl="auth/token")`: Swagger gửi username/password dạng form tới `POST /auth/token`, nhận JWT rồi tự gắn vào mọi request.
+Giao diện web vẫn dùng `POST /auth/login` (JSON); hai endpoint dùng chung hàm `authenticate`.
+
+**`BackgroundTasks` dùng vào việc gì?**
+Tự động đánh dấu học phí quá hạn (thay cho `tuitionAutoOverdue` của Firebase). Sau khi trả kết quả xem học phí, FastAPI chạy việc nền này mà người dùng không phải chờ; có giới hạn tần suất để không quét CSDL ở mỗi request.
+
+**Nhập CSV bằng `UploadFile` có an toàn không?**
+Chỉ admin dùng được; giới hạn 1 MB và 100 dòng; kiểm tra từng dòng bằng chính schema `UserCreate`; không cho tạo admin; dòng lỗi hoặc trùng được liệt kê chứ không làm hỏng cả file. Hạn chế: mật khẩu nằm dạng chữ thường trong file nên phải xóa file sau khi nhập.
 
 **Bảo mật được làm thế nào?**
 Mật khẩu băm bcrypt; đăng nhập trả JWT (HS256, hết hạn sau 8 giờ); khóa tạm 15 phút sau 5 lần sai;
@@ -177,8 +209,30 @@ API không giữ trạng thái (xác thực bằng JWT), nên có thể chạy n
 PostgreSQL có thể chuyển sang dịch vụ quản lý.
 
 **AI Coach hoạt động ra sao?**
-Gửi bài viết/bài nói (dạng văn bản) lên `/coach/feedback`. Nếu có `GEMINI_API_KEY` thì gọi Gemini; nếu không có hoặc lỗi thì
-dùng bộ nhận xét theo luật (đếm từ, độ dài câu, từ lặp…). Lịch sử lưu trong bảng `coach_sessions`, mỗi người tối đa 20 lượt/ngày.
+Gửi bài viết/bài nói (dạng văn bản) lên `/coach/feedback` và nhận về điểm 0-10 cho 4 tiêu chí (ngữ pháp, từ vựng, mạch lạc, triển khai ý),
+danh sách lỗi kèm câu sửa và 2 gợi ý. Nếu có `GEMINI_API_KEY` thì Gemini chấm và trả JSON; nếu không có hoặc lỗi thì dùng bộ chấm theo luật.
+Mỗi lượt được lưu trong bảng `coach_sessions` (cột `analysis` dạng JSON và `overall`), mỗi người tối đa 20 lượt/ngày; `/coach/progress` trả điểm tổng theo thời gian để vẽ biểu đồ.
+
+**Làm sao tin được kết quả Gemini trả về?**
+Không tin mù quáng: backend kiểm tra bằng Pydantic (`CoachAnalysis`), ép điểm về 0-10, bỏ tiêu chí lạ, và loại mọi "lỗi" có đoạn trích không nằm trong bài của học viên
+(chống Gemini bịa). Nếu JSON hỏng hoặc thiếu điểm thì tự rơi về bộ chấm theo luật. Lời nhắc cũng dặn bỏ qua mệnh lệnh nằm trong bài để giảm rủi ro "prompt injection".
+
+**Bộ chấm theo luật chấm được gì, không chấm được gì?**
+Chỉ ước lượng từ vựng (độ đa dạng, từ lặp), mạch lạc (độ dài câu, từ nối) và triển khai ý (số từ); **không chấm ngữ pháp** vì luật không hiểu được ngữ pháp.
+Nó chỉ báo vài lỗi gần như chắc chắn: viết thường `i`, `a`/`an`, từ lặp liền nhau, chữ đầu câu. Điểm theo luật được tô màu khác trên biểu đồ để không bị nhầm với điểm của Gemini.
+
+**AI hỗ trợ giáo viên khác AI Coach ở điểm nào?**
+AI Coach dành cho học viên luyện viết/nói. Phần mới dành cho giáo viên và gồm hai tính năng, cùng dùng lớp `services/gemini.py`:
+(1) *Cảnh báo rủi ro*: mức rủi ro tính bằng luật từ chuyên cần và điểm số (`services/insights.py`) nên giải thích được lý do; AI chỉ gợi ý 3 hành động.
+(2) *Nhận xét học viên*: AI soạn nháp, giáo viên sửa rồi công bố; học viên/phụ huynh chỉ đọc bản đã công bố (`ai_notes.status`).
+
+**Gửi dữ liệu học viên cho Gemini có an toàn không?**
+Lời nhắc chỉ chứa con số (tỷ lệ chuyên cần, điểm trung bình, xu hướng), không có tên, tài khoản hay ghi chú tự do; test `test_gemini_prompt_has_no_personal_data` kiểm tra điều này.
+AI chỉ đề xuất, mọi nội dung đến tay phụ huynh đều do giáo viên duyệt. Mỗi giáo viên tối đa `AI_DAILY_LIMIT` (30) lượt/ngày để tránh tốn quota.
+
+**Vì sao dùng luật để phát hiện rủi ro thay vì để AI quyết định?**
+Luật minh bạch, tái lập được và không tốn quota: "chuyên cần dưới 60%" hay "vắng 3 buổi liên tiếp" ai cũng kiểm tra được. Nếu để AI phán đoán, kết quả có thể khác nhau
+giữa các lần gọi và khó giải thích với phụ huynh. AI được dùng ở chỗ mạnh hơn: diễn đạt nhận xét và đề xuất hành động.
 
 ---
 
@@ -204,4 +258,6 @@ erDiagram
   users ||--o{ tuition_records : "học viên"
   users ||--o{ parent_students : "phụ huynh / học viên"
   users ||--o{ coach_sessions : ""
+  classes ||--o{ ai_notes : "nhận xét / gợi ý"
+  users ||--o{ ai_notes : "học viên, giáo viên soạn"
 ```

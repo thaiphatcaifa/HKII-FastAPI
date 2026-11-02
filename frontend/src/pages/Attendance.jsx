@@ -9,8 +9,8 @@ export default function Attendance() {
     if (!studentId) return null
     const [summary, rows, classes] = await Promise.all([
       api.get(`/attendance/summary/${studentId}`),
-      api.get(`/attendance?student_id=${studentId}`),
-      api.get('/classes'),
+      api.getAll(`/attendance?student_id=${studentId}`),
+      api.getAll('/classes'),
     ])
     return { summary, rows, classes }
   }, [studentId])

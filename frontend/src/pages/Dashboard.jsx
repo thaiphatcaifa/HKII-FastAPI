@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Clock, GraduationCap, School, TriangleAlert, Users, Wallet, CircleCheck } from 'lucide-react'
 import { api } from '../api'
 import { useAuth } from '../auth'
+import { PublishedReviews } from '../components/AiTabs'
 import StudentPicker, { useStudentChoice } from '../components/StudentPicker'
 import { ErrorBox, Loading, PageTitle, Ring, StatCard, money, useAsync } from '../components/ui'
 
@@ -23,8 +24,8 @@ const CLASS_COLORS = [
 function AdminHome() {
   const { data, error, loading } = useAsync(async () => {
     const [classes, users, tuition] = await Promise.all([
-      api.get('/classes'),
-      api.get('/users'),
+      api.getAll('/classes'),
+      api.getAll('/users'),
       api.get('/tuition/summary'),
     ])
     return { classes, users, tuition }
@@ -94,7 +95,7 @@ function AdminHome() {
 }
 
 function TeacherHome() {
-  const { data, error, loading } = useAsync(() => api.get('/classes'), [])
+  const { data, error, loading } = useAsync(() => api.getAll('/classes'), [])
   if (loading) return <Loading />
   if (error) return <ErrorBox message={error} />
   if (data.length === 0) return <div className="card text-sm text-slate-500">Bạn chưa phụ trách lớp nào.</div>
@@ -132,7 +133,7 @@ function FamilyHome() {
     const [att, grades, tuition] = await Promise.all([
       api.get(`/attendance/summary/${studentId}`),
       api.get(`/scores/student/${studentId}/summary`),
-      api.get(`/tuition?student_id=${studentId}`),
+      api.getAll(`/tuition?student_id=${studentId}`),
     ])
     const avg = grades.length ? grades.reduce((s, g) => s + g.average_10, 0) / grades.length : null
     const owed = tuition.filter((t) => t.status !== 'paid').reduce((s, t) => s + t.amount, 0)
@@ -189,6 +190,7 @@ function FamilyHome() {
           </div>
         ))}
       </div>
+      <PublishedReviews studentId={studentId} />
       <p className="mt-4 flex items-center gap-2 text-xs text-slate-400">
         <GraduationCap className="h-4 w-4" />
         Tỷ lệ chuyên cần = (có mặt + đi trễ) / (tổng số buổi trừ buổi vắng có phép).

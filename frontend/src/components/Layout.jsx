@@ -3,6 +3,7 @@ import {
   Bot,
   CalendarCheck,
   GraduationCap,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   School,
@@ -19,12 +20,13 @@ const TUITION = ['/tuition', 'Học phí', Wallet]
 const COACH = ['/coach', 'AI Coach', Bot]
 const ATT = ['/attendance', 'Chuyên cần', CalendarCheck]
 const GRADES = ['/grades', 'Điểm số', GraduationCap]
+const ACCOUNT = ['/account', 'Tài khoản', KeyRound]
 
 const NAV = {
-  admin: [HOME, CLASSES, USERS, TUITION, COACH],
-  teacher: [HOME, CLASSES, COACH],
-  student: [HOME, ATT, GRADES, TUITION, COACH],
-  parent: [HOME, ATT, GRADES, TUITION],
+  admin: [HOME, CLASSES, USERS, TUITION, COACH, ACCOUNT],
+  teacher: [HOME, CLASSES, COACH, ACCOUNT],
+  student: [HOME, ATT, GRADES, TUITION, COACH, ACCOUNT],
+  parent: [HOME, ATT, GRADES, TUITION, ACCOUNT],
 }
 
 export default function Layout() {
