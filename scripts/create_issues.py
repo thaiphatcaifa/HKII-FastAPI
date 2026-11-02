@@ -106,7 +106,7 @@ Giáo viên sửa được điểm và ghi chú đã nhập. Nút xóa điểm �
         "who": "A",
         "labels": ["thành viên A", "backend", "test"],
         "body": """## Mục tiêu
-Tăng độ phủ test cho các API chưa có test riêng.
+Tăng độ phủ test cho các API chưa có test riêng. Phân trang `/users` và nhập người dùng từ CSV đã có test trong `test_extra.py`.
 
 ## Gợi ý các tình huống (thêm vào `backend/tests/test_api.py`)
 - [ ] Ghi danh học viên vào lớp: thành công (201), trùng (409), không phải học viên (404)
@@ -121,7 +121,7 @@ docker compose run --rm --no-deps api python -m pytest -q
 ```
 
 ## Tiêu chí hoàn thành
-- Toàn bộ test đạt, số test tăng so với 15 hiện tại.
+- Toàn bộ test đạt, số test tăng so với 62 hiện tại (lần chạy 01/11/2026).
 """,
     },
     {
@@ -132,12 +132,48 @@ docker compose run --rm --no-deps api python -m pytest -q
 Có tài liệu thiết kế CSDL và phân quyền do chính nhóm viết, để giải thích được khi bảo vệ.
 
 ## Việc cần làm
-- [ ] Tạo `docs/THIET-KE-CSDL.md`: mô tả 8 bảng, khóa chính, khóa ngoại, ràng buộc duy nhất và lý do (đọc `backend/app/models.py`)
+- [ ] Tạo `docs/THIET-KE-CSDL.md`: mô tả 9 bảng, khóa chính, khóa ngoại, ràng buộc duy nhất và lý do (đọc `backend/app/models.py`)
 - [ ] Vẽ sơ đồ ER (có thể dùng Mermaid như trong `docs/HUONG-DAN-CHAY.md`) rồi chỉnh theo hiểu biết của nhóm
 - [ ] Viết ma trận phân quyền theo 4 vai trò và chỉ ra nơi kiểm tra trong `backend/app/deps.py`
 
 ## Tiêu chí hoàn thành
 - Thành viên A giải thích được từng bảng và từng quy tắc phân quyền mà không cần nhìn tài liệu.
+""",
+    },
+    {
+        "title": "Chạy test trên PostgreSQL thật",
+        "who": "A",
+        "labels": ["thành viên A", "backend", "test", "devops"],
+        "body": """## Mục tiêu
+Hiện `backend/tests/conftest.py` ép test chạy trên SQLite. Cần có cách chạy cùng bộ test trên PostgreSQL để chắc chắn hành vi giống môi trường thật.
+
+## Lưu ý quan trọng
+Test dùng `drop_all` và `create_all`, nên **phải dùng một CSDL riêng** (ví dụ `hkii_test`), tuyệt đối không trỏ vào CSDL `hkii` đang chạy.
+
+## Việc cần làm
+- [ ] Cho phép chọn CSDL test qua biến môi trường (ví dụ `TEST_DATABASE_URL`), mặc định vẫn là SQLite
+- [ ] Thêm một profile PostgreSQL cho test trong `docker-compose.yml`; nếu muốn chạy trong CI thì phối hợp với B (người làm GitHub Actions)
+- [ ] Ghi cách chạy vào `docs/HUONG-DAN-CHAY.md`
+
+## Tiêu chí hoàn thành
+- Toàn bộ test hiện có đạt trên cả SQLite và PostgreSQL.
+""",
+    },
+    {
+        "title": "Cập nhật slide 1–10 cho khớp code mới",
+        "who": "A",
+        "labels": ["thành viên A", "tài liệu"],
+        "body": """## Mục tiêu
+Slide được làm trước khi có AI hỗ trợ giáo viên và các tính năng FastAPI bổ sung, nên phần A trình bày cần khớp với code hiện tại.
+
+## Việc cần làm
+- [ ] Slide 3 "5 module": thêm AI hỗ trợ giáo viên (cảnh báo rủi ro, nhận xét học viên)
+- [ ] Slide 7: thêm dòng quyền cho AI hỗ trợ giáo viên vào bảng (ai xem cảnh báo, ai duyệt và công bố nhận xét; đối chiếu `backend/app/routers/ai.py`)
+- [ ] Cân nhắc nhắc tới nhập người dùng từ CSV (trang Người dùng)
+- [ ] Sửa ghi chú lời nói của các slide đã đổi
+
+## Tiêu chí hoàn thành
+- Mọi thông tin trên slide 1–10 khớp với code ở `main`.
 """,
     },
     # ---------------- Thành viên B ----------------
@@ -178,22 +214,36 @@ Mỗi lần push hoặc mở pull request, hệ thống tự chạy test backend
 """,
     },
     {
-        "title": "Chạy test trên PostgreSQL thật",
+        "title": "Thử Cảnh báo và Nhận xét AI trên giao diện với dữ liệu mẫu",
         "who": "B",
-        "labels": ["thành viên B", "backend", "test", "devops"],
+        "labels": ["thành viên B", "frontend", "backend"],
         "body": """## Mục tiêu
-Hiện `backend/tests/conftest.py` ép test chạy trên SQLite. Cần có cách chạy cùng bộ test trên PostgreSQL để chắc chắn hành vi giống môi trường thật.
-
-## Lưu ý quan trọng
-Test dùng `drop_all` và `create_all`, nên **phải dùng một CSDL riêng** (ví dụ `hkii_test`), tuyệt đối không trỏ vào CSDL `hkii` đang chạy.
+Chắc chắn tính năng AI hỗ trợ giáo viên chạy đúng như kịch bản demo và luật rủi ro cho kết quả hợp lý.
 
 ## Việc cần làm
-- [ ] Cho phép chọn CSDL test qua biến môi trường (ví dụ `TEST_DATABASE_URL`), mặc định vẫn là SQLite
-- [ ] Thêm service PostgreSQL vào workflow CI hoặc một profile trong `docker-compose.yml`
-- [ ] Ghi cách chạy vào `docs/HUONG-DAN-CHAY.md`
+- [ ] Đăng nhập giáo viên, mở một lớp, thử tab **Cảnh báo**: danh sách xếp theo mức rủi ro, mỗi học viên có lý do cụ thể
+- [ ] Bấm **Gợi ý hành động** ở một học viên rủi ro
+- [ ] Thử tab **Nhận xét AI**: soạn nháp, sửa, công bố; đăng nhập học viên hoặc phụ huynh để thấy nhận xét đã công bố
+- [ ] Đối chiếu ngưỡng trong `backend/app/services/insights.py` với dữ liệu mẫu; ghi lại ngưỡng nào nên chỉnh và vì sao
 
 ## Tiêu chí hoàn thành
-- 15 test hiện có đạt trên cả SQLite và PostgreSQL.
+- Chạy trọn kịch bản trong `docs/HUONG-DAN-CHAY.md` (phần AI hỗ trợ giáo viên) không lỗi; có ghi chú về ngưỡng rủi ro.
+""",
+    },
+    {
+        "title": "Giải thích vì sao rủi ro tính bằng luật, AI chỉ gợi ý và soạn nháp",
+        "who": "B",
+        "labels": ["thành viên B", "tài liệu"],
+        "body": """## Mục tiêu
+Trả lời được câu hỏi bảo vệ về thiết kế AI hỗ trợ giáo viên bằng lời của mình.
+
+## Việc cần làm
+- [ ] Đọc câu hỏi "Vì sao dùng luật để phát hiện rủi ro thay vì để AI quyết định?" trong `docs/HUONG-DAN-CHAY.md` (mục 4)
+- [ ] Đọc `services/insights.py` (luật) và `services/insights_ai.py` (AI soạn nháp) để chỉ ra chỗ tách hai phần
+- [ ] Giải thích được: vì sao luật dễ giải thích hơn, vì sao AI không nhận tên học viên, vì sao nhận xét phải được giáo viên duyệt trước khi công bố
+
+## Tiêu chí hoàn thành
+- Trình bày lại cho thành viên A trong 3 phút, không nhìn tài liệu.
 """,
     },
     {
@@ -204,8 +254,8 @@ Test dùng `drop_all` và `create_all`, nên **phải dùng một CSDL riêng** 
 Bảo đảm không có khóa hay mật khẩu yếu bị đưa lên repo công khai.
 
 ## Việc cần làm
-- [ ] Xác nhận `.env` không có trong lịch sử git: `git log --all --stat -- .env`
-- [ ] `SECRET_KEY` mặc định trong `docker-compose.yml` là giá trị demo: ghi rõ trong tài liệu cần đổi, hoặc thêm cảnh báo khi khởi động nếu còn dùng giá trị mặc định
+- [ ] Xác nhận `.env` không có trong lịch sử git: `git log --all --stat -- .env` (ngày 01/11/2026 git chỉ theo dõi `.env.example`)
+- [ ] `SECRET_KEY` mặc định (`dev-only-change-me` trong `backend/app/config.py`, và trong `docker-compose.yml`) là giá trị demo: ghi rõ trong tài liệu cần đổi, hoặc thêm cảnh báo khi khởi động nếu còn dùng giá trị mặc định
 - [ ] Mật khẩu mẫu `Hkii@12345` chỉ để demo: nhắc đổi `SEED_PASSWORD` trong README
 - [ ] Quét repo tìm chuỗi nghi là khóa: `git grep -nE "AIza|gho_|BEGIN (RSA|PRIVATE)"`
 - [ ] Cân nhắc chuyển repo sang private nếu không cần công khai
@@ -231,7 +281,55 @@ Kiểm tra đường gọi Gemini hoạt động thật (hiện mới chạy b�
 - Chụp được màn hình nhận xét từ Gemini (không lộ khóa) để dùng khi thuyết trình.
 """,
     },
+    {
+        "title": "Cập nhật slide 11–17 cho khớp code mới",
+        "who": "B",
+        "labels": ["thành viên B", "tài liệu"],
+        "body": """## Mục tiêu
+Slide được làm trước khi có AI hỗ trợ giáo viên và AI Coach bản mới, nên phần B trình bày cần khớp với code hiện tại.
+
+## Việc cần làm
+- [ ] Slide 12: AI Coach bản mới (chấm theo tiêu chí, lỗi kèm câu sửa, biểu đồ tiến bộ)
+- [ ] Thêm 1 slide **AI hỗ trợ giáo viên** (cảnh báo rủi ro bằng luật, nhận xét AI soạn nháp và giáo viên duyệt)
+- [ ] Slide 13: đếm lại số thao tác API và đường dẫn ở `http://localhost:8000/docs`
+- [ ] Slide 15: sửa "15/15" thành số test hiện tại (62 test đạt ngày 01/11/2026)
+- [ ] Sửa ghi chú lời nói và đánh lại số slide trong `docs/PHAN-CONG.md` (mục 5)
+
+## Tiêu chí hoàn thành
+- Mọi con số và tính năng trên slide 11 trở đi khớp với code ở `main`.
+""",
+    },
     # ---------------- Cả nhóm ----------------
+    {
+        "title": "Đẩy nhánh feature/crud-logging-pagination lên GitHub và gộp vào main",
+        "who": "BOTH",
+        "labels": ["cả nhóm", "devops"],
+        "body": """## Mục tiêu
+Đưa code mới nhất lên GitHub để cả hai cùng làm trên một bản. Hiện 4 commit (CRUD, logging, phân trang, AI hỗ trợ giáo viên, AI Coach mới) chỉ nằm ở máy chủ repo; ai clone repo cũng chỉ nhận bản cũ.
+
+## Việc cần làm
+- [ ] Chủ repo chạy test (`hkii-run-tests.bat` hoặc lệnh pytest và `npm run build`)
+- [ ] Chủ repo đẩy nhánh: `git push -u origin feature/crud-logging-pagination`
+- [ ] Mở pull request vào `main`; người kia đọc và duyệt
+- [ ] Gộp, rồi cả hai `git pull` trên `main`
+
+## Tiêu chí hoàn thành
+- `main` trên GitHub có đủ tính năng AI hỗ trợ giáo viên; clone mới chạy được và 62 test đạt.
+""",
+    },
+    {
+        "title": "Điền bảng thành viên và ngày hạn trong PHAN-CONG.md",
+        "who": "BOTH",
+        "labels": ["cả nhóm", "tài liệu"],
+        "body": """## Việc cần làm
+- [ ] Điền họ tên, mã sinh viên, tên GitHub của A và B vào `docs/PHAN-CONG.md` (mục 1)
+- [ ] Đặt ngày hạn cho 4 giai đoạn ở mục 6 theo lịch của trường
+- [ ] Đặt `ASSIGNEE_A`, `ASSIGNEE_B` khi chạy `scripts/create_issues.py` để gán người phụ trách
+
+## Tiêu chí hoàn thành
+- Mục 1 và mục 6 không còn ô trống.
+""",
+    },
     {
         "title": "Đọc chéo: mỗi người giảng lại phần của mình cho người kia",
         "who": "BOTH",
@@ -240,8 +338,8 @@ Kiểm tra đường gọi Gemini hoạt động thật (hiện mới chạy b�
 Cả hai cùng giải thích được toàn bộ hệ thống khi bảo vệ.
 
 ## Việc cần làm
-- [ ] Thành viên A giảng 20–30 phút: module 1, 2, 3, CSDL, phân quyền
-- [ ] Thành viên B giảng 20–30 phút: module 4, 5, Docker, nginx, CI
+- [ ] Thành viên A giảng 20–30 phút: module 1, 2, 3, CSDL, phân quyền (`deps.py`, `security.py`)
+- [ ] Thành viên B giảng 20–30 phút: module 4, 5, AI hỗ trợ giáo viên, xử lý lỗi và logging, Docker, nginx, CI
 - [ ] Đổi vai, người nghe đặt câu hỏi "vì sao viết như vậy?"
 - [ ] Ghi lại các câu hỏi chưa trả lời được và tìm hiểu thêm
 
