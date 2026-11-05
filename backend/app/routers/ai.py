@@ -8,6 +8,7 @@ import logging
 
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from app import crud
 from app.config import settings
@@ -97,15 +98,27 @@ def class_risk(
     return [_to_risk(i) for i in items]
 
 
-@router.post("/risk/advice", response_model=AdviceOut, status_code=201)
-def risk_advice(data: AdviceIn, db: Session = Depends(get_db), user: User = Depends(staff)):
-    """AI gợi ý 3 hành động cho giáo viên với một học viên đang có dấu hiệu rủi ro (không hiện với học viên/phụ huynh)."""
+def _prepare_advice(db: Session, user: User, data: AdviceIn) -> insights.StudentInsight:
+    """Phần truy vấn đồng bộ trước khi gọi AI. Đóng session để trả kết nối về pool trong lúc chờ Gemini."""
     item = _insight_for(db, user, data.class_id, data.student_id)
     if not item.factors:
         raise BadRequestError("Học viên chưa có dấu hiệu rủi ro nên không cần gợi ý hành động.")
     _check_quota(db, user)
-    content, provider = insights_ai.generate_advice(item)
-    note = crud.ai_notes.create_note(
+    db.close()
+    return item
+
+
+@router.post("/risk/advice", response_model=AdviceOut, status_code=201)
+async def risk_advice(data: AdviceIn, db: Session = Depends(get_db), user: User = Depends(staff)):
+    """AI gợi ý 3 hành động cho giáo viên với một học viên đang có dấu hiệu rủi ro (không hiện với học viên/phụ huynh).
+
+    Ví dụ `async def`: chờ Gemini bằng httpx.AsyncClient nên event loop vẫn phục vụ request khác. SQLAlchemy ở đây
+    là đồng bộ, nên mọi truy vấn trong hàm này phải đi qua `run_in_threadpool` để không chặn event loop.
+    """
+    item = await run_in_threadpool(_prepare_advice, db, user, data)
+    content, provider = await insights_ai.generate_advice(item)
+    note = await run_in_threadpool(
+        crud.ai_notes.create_note,
         db,
         kind=AiNoteKind.advice,
         class_id=data.class_id,

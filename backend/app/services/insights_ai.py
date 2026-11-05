@@ -6,7 +6,7 @@ dùng bộ soạn theo luật nên tính năng vẫn chạy khi demo.
 """
 import logging
 
-from app.services.gemini import generate_with_fallback
+from app.services.gemini import generate_with_fallback, generate_with_fallback_async
 from app.services.insights import StudentInsight
 
 logger = logging.getLogger("hkii.ai")
@@ -111,6 +111,11 @@ _ACTIONS = {
     "score_low": "Giao thêm bài luyện tập nhỏ mỗi tuần và kiểm tra lại sau 2 tuần.",
     "score_drop": "Xem lại bài kiểm tra gần nhất cùng học viên để tìm phần kiến thức bị hổng.",
 }
+# Thêm vào khi học viên có ít dấu hiệu, để luôn đủ 3 gợi ý như đã hứa với giáo viên
+_GENERAL_ACTIONS = (
+    "Theo dõi lại số liệu sau 2 tuần để xem biện pháp có hiệu quả không.",
+    "Trao đổi ngắn với học viên để hiểu khó khăn hiện tại và thống nhất mục tiêu cho 2 tuần tới.",
+)
 
 
 def advice_fallback(i: StudentInsight) -> str:
@@ -121,15 +126,13 @@ def advice_fallback(i: StudentInsight) -> str:
             actions.append(action)
     if not actions:
         return "- Học viên đang ổn định, tiếp tục theo dõi định kỳ."
-    if len(actions) < 3:
-        actions.append("Theo dõi lại số liệu sau 2 tuần để xem biện pháp có hiệu quả không.")
-    return "\n".join(f"- {a}" for a in actions[:3])
+    return "\n".join(f"- {a}" for a in [*actions, *_GENERAL_ACTIONS][:3])
 
 
-def generate_advice(i: StudentInsight) -> tuple[str, str]:
+async def generate_advice(i: StudentInsight) -> tuple[str, str]:
     prompt = _ADVICE_PROMPT.format(
         level=LEVEL_TEXT.get(i.level, i.level),
         facts=facts_text(i),
         reasons="\n".join(f"- {f.text}" for f in i.factors) or "- (không có)",
     )
-    return generate_with_fallback(prompt, lambda: advice_fallback(i), logger)
+    return await generate_with_fallback_async(prompt, lambda: advice_fallback(i), logger)

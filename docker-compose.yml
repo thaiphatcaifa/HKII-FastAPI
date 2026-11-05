@@ -20,6 +20,7 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
+      APP_ENV: ${APP_ENV:-dev}
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-hkii}:${POSTGRES_PASSWORD:-hkii_dev}@db:5432/${POSTGRES_DB:-hkii}
       SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}

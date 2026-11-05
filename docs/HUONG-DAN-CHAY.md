@@ -72,13 +72,29 @@ Sửa code backend hoặc frontend xong thì chạy lại `docker compose up -d 
 
 ### 1.6 Chạy test
 
-Test dùng SQLite riêng, **không đụng PostgreSQL** (62 test):
+Code nằm trong image, nên sau khi sửa code hoặc test phải chạy `docker compose build api` trước.
+
+**Trên SQLite (mặc định, không đụng PostgreSQL):**
 
 ```bash
 docker compose run --rm --no-deps api python -m pytest -q
 ```
 
-Kết quả mong đợi: `62 passed`. Test mất khoảng 1 phút vì băm mật khẩu bcrypt cho dữ liệu mẫu ở mỗi test.
+**Trên PostgreSQL thật:** dùng CSDL riêng `hkii_test`, không dùng CSDL chính `hkii`.
+
+```bash
+docker compose up -d db
+docker compose exec db createdb -U hkii hkii_test
+docker compose run --rm --no-deps -e TEST_DATABASE_URL=postgresql+psycopg://hkii:hkii_dev@db:5432/hkii_test api python -m pytest -q
+```
+
+- Lệnh `createdb` chỉ cần chạy một lần; chạy lại sẽ báo `already exists`, bỏ qua được. Sau `docker compose down -v` thì phải tạo lại.
+- Nếu đã đổi `POSTGRES_USER` hoặc `POSTGRES_PASSWORD` trong `.env` thì thay trong lệnh cho khớp.
+- Mỗi test xóa và tạo lại toàn bộ bảng, nên `conftest.py` từ chối chạy nếu tên CSDL không có chữ `test` hoặc URL trùng `DATABASE_URL`.
+
+Kết quả mong đợi ở cả hai lệnh: `90 passed`. Mỗi lần chạy mất khoảng 1 phút vì băm mật khẩu bcrypt cho dữ liệu mẫu ở mỗi test.
+
+**CI:** `.github/workflows/ci.yml` chạy mỗi lần push và pull request: pytest trên SQLite, pytest trên PostgreSQL (service container), `npm ci` và `npm run build`.
 
 ### 1.7 Bật Gemini cho AI Coach và AI hỗ trợ giáo viên (tùy chọn)
 
@@ -110,6 +126,18 @@ npm run dev        # http://localhost:5173, tự chuyển /api sang http://local
 | Đăng nhập bị báo **423** (khóa tạm) | Nhập sai mật khẩu 5 lần sẽ bị khóa 15 phút. Đợi hoặc `docker compose down -v` để nạp lại dữ liệu |
 | Đổi `SEED_PASSWORD` mà không có tác dụng | Dữ liệu mẫu chỉ nạp khi DB còn trống. Chạy `docker compose down -v` rồi `up` lại |
 | Muốn làm lại từ đầu | `docker compose down -v && docker compose up --build` |
+| API dừng và log báo `APP_ENV=prod nhưng SECRET_KEY...` | Đang chạy `prod` mà khóa còn giá trị mặc định. Đặt `SECRET_KEY` và `SEED_PASSWORD` riêng trong `.env` (xem mục 1.10) |
+
+### 1.10 Môi trường chạy `APP_ENV`
+
+Đặt trong `.env`, nhận `dev` hoặc `prod`, mặc định `dev`. Giá trị khác làm API báo lỗi ngay khi khởi động.
+
+| `APP_ENV` | `SECRET_KEY` hoặc `SEED_PASSWORD` còn giá trị mặc định (hoặc để trống) |
+|---|---|
+| `dev` | API vẫn chạy, log có dòng `WARNING` nêu tên biến |
+| `prod` | API dừng khởi động, log nêu tên biến cần đổi (không in giá trị) |
+
+Do `docker-compose.yml` đặt `restart: unless-stopped`, container sẽ tự thử lại cho đến khi sửa xong `.env`. Lúc đó chạy `docker compose up -d` để áp dụng.
 
 ---
 
@@ -141,7 +169,7 @@ Chuẩn bị trước: chạy `docker compose up -d` ít nhất 1 phút trước
 | 2:30–3:15 | Đăng xuất, đăng nhập **`ph.an`** → xem **Chuyên cần**, **Điểm số** của con | "Phụ huynh chỉ xem được con mình. Thử truy cập con của người khác sẽ bị chặn 403." |
 | 3:15–4:00 | Đăng nhập **`admin`** → **Học phí**: tạo khoản, **Đánh dấu quá hạn**, **Ghi nhận đã đóng** | "Học phí chỉ admin quản lý. Giáo viên không xem được học phí." |
 | 4:00–4:40 | Đăng nhập **`hv01`** → **AI Coach**: dán đoạn văn có vài lỗi (ví dụ `i like a apple. I read the the book.`) → **Chấm bài**; nộp thêm một bài để thấy biểu đồ tiến bộ | "Kết quả có điểm từng tiêu chí và lỗi kèm câu sửa. Có Gemini thì Gemini chấm; không có key hoặc lỗi thì tự chuyển sang bộ luật, chỉ ước lượng và không chấm ngữ pháp. Giới hạn 20 lượt/ngày." |
-| 4:40–5:00 | Mở http://localhost:8000/docs, bấm thử `/health` | "API tự sinh tài liệu OpenAPI. Toàn bộ backend có 62 test tự động." |
+| 4:40–5:00 | Mở http://localhost:8000/docs, bấm thử `/health` | "API tự sinh tài liệu OpenAPI, tổng cộng 49 API. Backend có 90 test tự động, chạy được trên cả SQLite và PostgreSQL." |
 
 **Demo mở rộng (nếu còn thời gian): AI hỗ trợ giáo viên** — đăng nhập **`gv.lan`**, mở lớp **IELTS-A1**:
 
@@ -193,10 +221,16 @@ Chỉ admin dùng được; giới hạn 1 MB và 100 dòng; kiểm tra từng d
 Mật khẩu băm bcrypt; đăng nhập trả JWT (HS256, hết hạn sau 8 giờ); khóa tạm 15 phút sau 5 lần sai;
 thông báo lỗi đăng nhập gộp chung để không lộ tài khoản có tồn tại; phân quyền theo vai trò kiểm tra ở backend (`deps.py`),
 không dựa vào giao diện; khóa và mật khẩu lấy từ biến môi trường, `.env` không được commit.
+Khi `APP_ENV=prod`, API từ chối khởi động nếu `SECRET_KEY` hoặc `SEED_PASSWORD` còn giá trị mặc định công khai trong repo.
+
+**Khi nào dùng `async def`, khi nào dùng `def`?**
+SQLAlchemy của dự án là đồng bộ, nên phần lớn endpoint là `def`: FastAPI tự chạy chúng trong threadpool và event loop không bị chặn.
+`POST /ai/risk/advice` là ví dụ `async def` vì phần lớn thời gian của nó là chờ Gemini: dùng `httpx.AsyncClient` để nhường event loop, truy vấn CSDL đi qua `run_in_threadpool`, và session được đóng trước khi gọi Gemini để không giữ kết nối CSDL trong lúc chờ.
+Sai lầm cần tránh là gọi truy vấn đồng bộ trực tiếp trong `async def`, vì khi đó toàn bộ API phải chờ theo.
 
 **Hạn chế còn lại?**
 JWT đang lưu ở `localStorage` (có rủi ro XSS, hướng cải thiện: cookie `HttpOnly`); chưa có refresh token; chưa có CAPTCHA;
-mật khẩu mẫu chỉ dành cho demo; test chạy trên SQLite chứ không phải PostgreSQL; chưa có test giao diện và CI.
+mật khẩu mẫu chỉ dành cho demo; chưa có test giao diện.
 
 **Dữ liệu mẫu lấy từ đâu?**
 Toàn bộ là dữ liệu giả do chương trình tự sinh (`backend/app/seed.py`), không lấy từ hệ thống thật.

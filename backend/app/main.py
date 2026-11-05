@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from starlette.concurrency import run_in_threadpool
 
-from app.config import settings
+from app.config import check_security_config, settings
 from app.db import SessionLocal
 from app.error_handlers import register_exception_handlers
 from app.logging_config import setup_logging
@@ -21,7 +21,8 @@ request_logger = logging.getLogger("hkii.request")
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    logger.info("Khởi động HKII API (log_level=%s)", settings.log_level)
+    check_security_config(settings, logger)
+    logger.info("Khởi động HKII API (app_env=%s, log_level=%s)", settings.app_env, settings.log_level)
     if settings.seed_on_start:
         from app.seed import seed_if_empty
 

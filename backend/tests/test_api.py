@@ -1,6 +1,6 @@
 import datetime as dt
 
-from tests.conftest import user_id
+from tests.conftest import login, user_id
 
 
 # ---------- Auth ----------
@@ -138,3 +138,140 @@ def test_coach_uses_rule_based_fallback(client, student):
 def test_parent_cannot_use_coach(client, parent):
     r = client.post("/coach/feedback", json={"kind": "writing", "text": "x" * 40}, headers=parent)
     assert r.status_code == 403
+
+
+# ---------- Ghi danh vào lớp ----------
+def _class_by_code(client, headers, code):
+    return next(c for c in client.get("/classes", headers=headers).json() if c["code"] == code)
+
+
+def _class_usernames(client, headers, class_id):
+    return [s["username"] for s in client.get(f"/classes/{class_id}/students", headers=headers).json()]
+
+
+def test_enroll_duplicate_and_remove_student(client, admin):
+    class_id = _class_by_code(client, admin, "IELTS-A1")["id"]
+    sid = user_id(client, admin, "hv08")  # hv08 chưa thuộc IELTS-A1
+    assert "hv08" not in _class_usernames(client, admin, class_id)
+
+    added = client.post(f"/classes/{class_id}/students", json={"student_id": sid}, headers=admin)
+    assert added.status_code == 201, added.text
+    assert added.json() == {"class_id": class_id, "student_id": sid}
+    assert "hv08" in _class_usernames(client, admin, class_id)
+
+    # Ghi danh trùng bị từ chối và không tạo thêm dòng
+    before = len(_class_usernames(client, admin, class_id))
+    again = client.post(f"/classes/{class_id}/students", json={"student_id": sid}, headers=admin)
+    assert again.status_code == 409
+    assert len(_class_usernames(client, admin, class_id)) == before
+
+    # Xóa khỏi lớp; xóa lần hai báo không còn trong lớp
+    assert client.delete(f"/classes/{class_id}/students/{sid}", headers=admin).status_code == 204
+    assert "hv08" not in _class_usernames(client, admin, class_id)
+    assert client.delete(f"/classes/{class_id}/students/{sid}", headers=admin).status_code == 404
+
+
+def test_enroll_rejects_non_student_and_unknown_ids(client, admin):
+    class_id = _class_by_code(client, admin, "IELTS-A1")["id"]
+    url = f"/classes/{class_id}/students"
+    teacher_id = user_id(client, admin, "gv.lan")
+    assert client.post(url, json={"student_id": teacher_id}, headers=admin).status_code == 404  # không phải học viên
+    assert client.post(url, json={"student_id": 999999}, headers=admin).status_code == 404
+    sid = user_id(client, admin, "hv08")
+    assert client.post("/classes/999999/students", json={"student_id": sid}, headers=admin).status_code == 404
+
+
+def test_enroll_permissions(client, admin, teacher, student, parent):
+    own = _class_by_code(client, admin, "IELTS-A1")["id"]  # của gv.lan
+    other = _class_by_code(client, admin, "GIAOTIEP-1")["id"]  # của gv.minh
+    sid = user_id(client, admin, "hv08")
+    existing = user_id(client, admin, "hv01")  # hv01 thuộc cả hai lớp
+
+    # Giáo viên chỉ quản lý được lớp mình phụ trách
+    assert client.post(f"/classes/{own}/students", json={"student_id": sid}, headers=teacher).status_code == 201
+    assert client.delete(f"/classes/{own}/students/{sid}", headers=teacher).status_code == 204
+    assert client.post(f"/classes/{other}/students", json={"student_id": sid}, headers=teacher).status_code == 403
+    assert client.delete(f"/classes/{other}/students/{existing}", headers=teacher).status_code == 403
+
+    # Học viên, phụ huynh không được ghi danh hay xóa
+    for who in (student, parent):
+        assert client.post(f"/classes/{own}/students", json={"student_id": sid}, headers=who).status_code == 403
+        assert client.delete(f"/classes/{own}/students/{existing}", headers=who).status_code == 403
+    assert client.post(f"/classes/{own}/students", json={"student_id": sid}).status_code == 401
+
+
+# ---------- Quản lý người dùng ----------
+NEW_USER = {"username": "hv.moi", "full_name": "Học Viên Mới", "password": "MatKhau@123", "role": "student"}
+
+
+def test_create_user_and_login(client, admin):
+    r = client.post("/users", json=NEW_USER, headers=admin)
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["username"] == "hv.moi" and body["role"] == "student" and body["is_active"] is True
+    assert "password" not in body and "password_hash" not in body  # không trả mật khẩu về
+    login(client, "hv.moi", "MatKhau@123")
+
+
+def test_create_user_duplicate_username_and_validation(client, admin):
+    assert client.post("/users", json=NEW_USER, headers=admin).status_code == 201
+    dup = client.post("/users", json={**NEW_USER, "full_name": "Người Khác"}, headers=admin)
+    assert dup.status_code == 409
+    assert isinstance(dup.json()["detail"], str)
+    assert client.post("/users", json={**NEW_USER, "username": "admin"}, headers=admin).status_code == 409
+    # Tên đăng nhập có ký tự lạ, mật khẩu quá ngắn, vai trò không có thật
+    assert client.post("/users", json={**NEW_USER, "username": "co dau cach"}, headers=admin).status_code == 422
+    assert client.post("/users", json={**NEW_USER, "username": "hv.ngan", "password": "123"}, headers=admin).status_code == 422
+    assert client.post("/users", json={**NEW_USER, "username": "hv.sai", "role": "boss"}, headers=admin).status_code == 422
+
+
+def test_update_user_fields_and_password(client, admin):
+    uid = client.post("/users", json=NEW_USER, headers=admin).json()["id"]
+
+    renamed = client.patch(f"/users/{uid}", json={"full_name": "Tên Đã Sửa", "role": "parent"}, headers=admin)
+    assert renamed.status_code == 200, renamed.text
+    assert renamed.json()["full_name"] == "Tên Đã Sửa" and renamed.json()["role"] == "parent"
+
+    # Chỉ gửi một trường thì các trường khác giữ nguyên
+    same = client.patch(f"/users/{uid}", json={"password": "MatKhauMoi@456"}, headers=admin).json()
+    assert same["full_name"] == "Tên Đã Sửa" and same["role"] == "parent"
+    assert client.post("/auth/login", json={"username": "hv.moi", "password": "MatKhau@123"}).status_code == 401
+    login(client, "hv.moi", "MatKhauMoi@456")
+
+    assert client.patch("/users/999999", json={"full_name": "Không Có"}, headers=admin).status_code == 404
+
+
+def test_admin_can_lock_other_user(client, admin):
+    uid = client.post("/users", json=NEW_USER, headers=admin).json()["id"]
+    token = login(client, "hv.moi", "MatKhau@123")
+
+    locked = client.patch(f"/users/{uid}", json={"is_active": False}, headers=admin)
+    assert locked.status_code == 200 and locked.json()["is_active"] is False
+    assert client.get("/auth/me", headers=token).status_code == 401  # token cũ hết hiệu lực ngay
+    assert client.post("/auth/login", json={"username": "hv.moi", "password": "MatKhau@123"}).status_code == 401
+
+    assert client.patch(f"/users/{uid}", json={"is_active": True}, headers=admin).json()["is_active"] is True
+    login(client, "hv.moi", "MatKhau@123")
+
+
+def test_admin_cannot_lock_or_demote_self(client, admin):
+    admin_id = user_id(client, admin, "admin")
+    url = f"/users/{admin_id}"
+    assert client.patch(url, json={"is_active": False}, headers=admin).status_code == 400
+    assert client.patch(url, json={"role": "teacher"}, headers=admin).status_code == 400
+
+    # Yêu cầu bị từ chối không làm thay đổi tài khoản
+    me = client.get("/auth/me", headers=admin)
+    assert me.status_code == 200
+    assert me.json()["role"] == "admin" and me.json()["is_active"] is True
+
+    # Admin vẫn tự sửa được tên của mình
+    assert client.patch(url, json={"full_name": "Admin Mới", "role": "admin", "is_active": True}, headers=admin).status_code == 200
+
+
+def test_non_admin_cannot_manage_users(client, admin, teacher, student, parent):
+    uid = user_id(client, admin, "hv02")
+    for who in (teacher, student, parent):
+        assert client.post("/users", json=NEW_USER, headers=who).status_code == 403
+        assert client.patch(f"/users/{uid}", json={"full_name": "Hack"}, headers=who).status_code == 403
+        assert client.get("/users", headers=who).status_code == 403

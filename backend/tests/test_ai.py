@@ -3,14 +3,20 @@
 Không bao giờ gọi Gemini thật: GEMINI_API_KEY để trống nên mặc định dùng bộ soạn theo luật,
 còn nhánh Gemini được thử bằng cách thay hàm gọi mạng bằng hàm giả.
 """
+import asyncio
 import datetime as dt
 
 import httpx
 
+from app import crud
 from app.config import settings
+from app.db import engine
+from app.main import app
 from app.models import AttendanceStatus
+from app.routers import ai as ai_router
 from app.services import gemini
 from app.services.insights import absent_streak, evaluate
+from app.services.insights_ai import advice_fallback
 from app.services.stats import attendance_rate
 from tests.conftest import login, user_id
 
@@ -85,9 +91,12 @@ def test_evaluate_levels():
     high = evaluate(1, "A", [P, P, A, A, A], [4, 5, 3])
     assert high.level == "high" and high.points == 100 and len(high.factors) == 4
 
-    medium = evaluate(2, "B", [P, P, P, A], [6.0])  # chuyên cần 75% (+20), điểm TB 6.0 (+20)
-    assert medium.level == "medium" and medium.points == 40
+    medium = evaluate(2, "B", [P, P, P, A], [6.0])  # chuyên cần 75% (+25), điểm TB 6.0 (+20)
+    assert medium.level == "medium" and medium.points == 45
     assert {f.code for f in medium.factors} == {"attendance_low", "score_low"}
+
+    only_attendance = evaluate(5, "E", [P, P, P, A], [8.0])  # chuyên cần thấp một mình đã là mức trung bình
+    assert only_attendance.level == "medium" and only_attendance.points == 25
 
     fine = evaluate(3, "C", [P, P, P, L, P], [8, 9, 9.5])
     assert fine.level == "low" and fine.factors == [] and fine.enough_data
@@ -150,6 +159,18 @@ def test_advice_rules(client, admin, teacher, student):
     assert client.post("/ai/risk/advice", json=body, headers=student).status_code == 403
     # Gợi ý không bao giờ xuất hiện trong danh sách nhận xét
     assert client.get(f"/ai/reviews?class_id={class_id}", headers=teacher).json() == []
+
+
+def test_advice_fallback_always_gives_three_distinct_actions():
+    one = evaluate(1, "A", [P, P, P, L, L], [8, 8.5, 8.2])  # chỉ có dấu hiệu hay đi trễ
+    two = evaluate(2, "B", [P, P, P, A], [6.0])  # chuyên cần thấp và điểm thấp
+    many = evaluate(3, "C", [P, P, A, A, A], [4, 5, 3])  # 4 dấu hiệu
+    assert [len(one.factors), len(two.factors), len(many.factors)] == [1, 2, 4]
+    for item in (one, two, many):
+        lines = advice_fallback(item).splitlines()
+        assert len(lines) == 3 and len(set(lines)) == 3
+        assert all(line.startswith("- ") for line in lines)
+    assert "đến muộn" in advice_fallback(one).splitlines()[0]  # gợi ý đúng dấu hiệu đứng trước gợi ý chung
 
 
 # ---------- Nhận xét học viên: nháp -> sửa -> công bố ----------
@@ -242,8 +263,12 @@ def test_gemini_prompt_has_no_personal_data(client, admin, teacher, monkeypatch)
         prompts.append(prompt)
         return "Em học chăm chỉ, hãy giữ vững phong độ nhé."
 
+    async def fake_generate_async(prompt, timeout=30):  # gợi ý hành động đi theo nhánh async
+        return fake_generate(prompt, timeout)
+
     monkeypatch.setattr(settings, "gemini_api_key", "khoa-gia")
     monkeypatch.setattr(gemini, "generate_text", fake_generate)
+    monkeypatch.setattr(gemini, "generate_text_async", fake_generate_async)
     class_id, ids = scenario(client, admin, teacher)
     body = {"class_id": class_id, "student_id": ids["hv01"]}
 
@@ -270,5 +295,118 @@ def test_gemini_error_falls_back_to_rules(client, admin, teacher, monkeypatch):
     r = client.post("/ai/reviews", json=body, headers=teacher)
     assert r.status_code == 201 and r.json()["provider"] == "rules"
 
-    monkeypatch.setattr(gemini, "generate_text", lambda prompt, timeout=30: "")  # Gemini trả rỗng
+    async def empty_async(prompt, timeout=30):  # Gemini trả rỗng (gợi ý hành động đi theo nhánh async)
+        return ""
+
+    monkeypatch.setattr(gemini, "generate_text_async", empty_async)
     assert client.post("/ai/risk/advice", json=body, headers=teacher).json()["provider"] == "rules"
+
+
+# ---------- Gợi ý hành động bất đồng bộ ----------
+def _mock_async_gemini(monkeypatch, handler):
+    """Thay AsyncClient bằng bản có transport giả: không có request nào ra mạng thật."""
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(settings, "gemini_api_key", "khoa-gia")
+    monkeypatch.setattr(
+        gemini.httpx,
+        "AsyncClient",
+        lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs),
+    )
+
+
+def test_advice_calls_gemini_through_async_client(client, admin, teacher, monkeypatch):
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json={"candidates": [{"content": {"parts": [{"text": " - Gọi phụ huynh \n"}]}}]})
+
+    _mock_async_gemini(monkeypatch, handler)
+    class_id, ids = scenario(client, admin, teacher)
+    r = client.post("/ai/risk/advice", json={"class_id": class_id, "student_id": ids["hv01"]}, headers=teacher)
+    assert r.status_code == 201, r.text
+    assert r.json()["provider"] == "gemini" and r.json()["content"] == "- Gọi phụ huynh"
+    assert len(seen) == 1
+    assert seen[0].headers["x-goog-api-key"] == "khoa-gia"
+    assert "khoa-gia" not in str(seen[0].url)  # khóa nằm ở header, không nằm trên URL
+
+
+def test_advice_falls_back_when_async_gemini_fails(client, admin, teacher, monkeypatch):
+    responses = iter([httpx.Response(500), httpx.Response(200, json={"khong": "dung cau truc"})])
+    _mock_async_gemini(monkeypatch, lambda request: next(responses))
+    class_id, ids = scenario(client, admin, teacher)
+    body = {"class_id": class_id, "student_id": ids["hv01"]}
+    for _ in range(2):  # lỗi HTTP rồi đến JSON sai cấu trúc
+        r = client.post("/ai/risk/advice", json=body, headers=teacher)
+        assert r.status_code == 201 and r.json()["provider"] == "rules"
+
+
+def test_advice_releases_db_connection_while_waiting_for_gemini(client, admin, teacher, monkeypatch):
+    in_use = []
+
+    async def fake_generate_async(prompt, timeout=30):
+        in_use.append(engine.pool.checkedout())
+        return "- Gọi phụ huynh"
+
+    monkeypatch.setattr(settings, "gemini_api_key", "khoa-gia")
+    monkeypatch.setattr(gemini, "generate_text_async", fake_generate_async)
+    class_id, ids = scenario(client, admin, teacher)
+    r = client.post("/ai/risk/advice", json={"class_id": class_id, "student_id": ids["hv01"]}, headers=teacher)
+    assert r.status_code == 201, r.text
+    assert in_use == [0]
+
+
+def test_advice_db_work_runs_outside_event_loop(client, admin, teacher, monkeypatch):
+    calls = []
+
+    def off_loop(fn):
+        def wrapper(*args, **kwargs):
+            try:
+                asyncio.get_running_loop()
+                calls.append("trên event loop")
+            except RuntimeError:  # luồng trong threadpool không có event loop đang chạy
+                calls.append("threadpool")
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    monkeypatch.setattr(ai_router, "_prepare_advice", off_loop(ai_router._prepare_advice))
+    monkeypatch.setattr(crud.ai_notes, "create_note", off_loop(crud.ai_notes.create_note))
+    class_id, ids = scenario(client, admin, teacher)
+    r = client.post("/ai/risk/advice", json={"class_id": class_id, "student_id": ids["hv01"]}, headers=teacher)
+    assert r.status_code == 201, r.text
+    assert calls == ["threadpool", "threadpool"]
+
+
+def test_advice_does_not_block_event_loop(client, admin, teacher, monkeypatch):
+    """Gemini chỉ trả lời sau khi một request khác đã được phục vụ: nếu event loop bị chặn, test sẽ hết giờ."""
+    class_id, ids = scenario(client, admin, teacher)
+    body = {"class_id": class_id, "student_id": ids["hv01"]}
+
+    async def run():
+        health_served = asyncio.Event()
+
+        async def fake_generate_async(prompt, timeout=30):
+            await asyncio.wait_for(health_served.wait(), timeout=10)
+            return "- Gọi phụ huynh"
+
+        monkeypatch.setattr(settings, "gemini_api_key", "khoa-gia")
+        monkeypatch.setattr(gemini, "generate_text_async", fake_generate_async)
+
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as async_client:
+
+            async def check_health():
+                response = await async_client.get("/health")
+                health_served.set()
+                return response
+
+            return await asyncio.gather(
+                async_client.post("/ai/risk/advice", json=body, headers=teacher),
+                check_health(),
+            )
+
+    advice, health = asyncio.run(run())
+    assert health.status_code == 200
+    assert advice.status_code == 201, advice.text
+    assert advice.json()["provider"] == "gemini"

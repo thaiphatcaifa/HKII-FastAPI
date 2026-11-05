@@ -22,6 +22,8 @@ Database + Cloud Functions) bằng **FastAPI**, **PostgreSQL** và **Docker**. P
 | 5 | AI Coach (chấm theo tiêu chí, sửa lỗi, theo dõi tiến bộ) | `/coach/feedback`, `/coach/history`, `/coach/progress` |
 | + | AI hỗ trợ giáo viên (cảnh báo rủi ro + nhận xét học viên) | `/ai/risk`, `/ai/risk/advice`, `/ai/reviews`, `/ai/reviews/{id}/publish` |
 
+Tổng cộng **49 API** trên 37 đường dẫn (đếm từ OpenAPI `/openapi.json`): users 9, classes 8, ai 8, scores 5, tuition 5, auth 4, attendance 3, coach 3, reports 3, system 1.
+
 Vai trò: `admin`, `teacher`, `student`, `parent`. Quyền được kiểm tra ở `backend/app/deps.py`
 (thay cho `database.rules.json` của Firebase).
 
@@ -36,6 +38,7 @@ docker compose up --build
 - API: http://localhost:8000 · Tài liệu tương tác (Swagger): http://localhost:8000/docs
 - PostgreSQL: `localhost:5433` (đổi bằng `DB_PORT`)
 - Lần chạy đầu tự tạo bảng (Alembic) và dữ liệu mẫu (`SEED_ON_START=true`).
+- `APP_ENV` (`dev` | `prod`, mặc định `dev`): khi `prod` mà `SECRET_KEY` hoặc `SEED_PASSWORD` còn giá trị mặc định thì API dừng khởi động; khi `dev` chỉ ghi cảnh báo vào log.
 
 Tài khoản mẫu (mật khẩu `SEED_PASSWORD`, mặc định `Hkii@12345`; **đổi trước khi dùng thật**):
 
@@ -48,13 +51,25 @@ Tài khoản mẫu (mật khẩu `SEED_PASSWORD`, mặc định `Hkii@12345`; **
 
 ## Chạy test
 
-> Lần đầu sau khi cập nhật (thêm `python-multipart` vào `requirements.txt`) cần build lại image: `docker compose build api`.
+Có **90 test**. Code nằm trong image nên sau khi sửa code hoặc test phải build lại: `docker compose build api`.
 
-Test dùng SQLite riêng, không đụng PostgreSQL:
+Mặc định test dùng SQLite riêng, không đụng PostgreSQL:
 
 ```bash
 docker compose run --rm --no-deps api python -m pytest -q
 ```
+
+Chạy trên PostgreSQL thật, bằng CSDL riêng `hkii_test` (mỗi test xóa và tạo lại toàn bộ bảng; `conftest.py` từ chối CSDL không có chữ `test` trong tên hoặc trùng `DATABASE_URL`):
+
+```bash
+docker compose up -d db
+docker compose exec db createdb -U hkii hkii_test
+docker compose run --rm --no-deps -e TEST_DATABASE_URL=postgresql+psycopg://hkii:hkii_dev@db:5432/hkii_test api python -m pytest -q
+```
+
+Nếu đã đổi `POSTGRES_USER` hoặc `POSTGRES_PASSWORD` trong `.env` thì thay trong các lệnh trên cho khớp.
+
+**CI:** `.github/workflows/ci.yml` chạy mỗi lần push và pull request: pytest trên SQLite, pytest trên PostgreSQL (service container), `npm ci` và `npm run build`.
 
 ## AI Coach
 
@@ -86,6 +101,7 @@ Nguyên tắc: **AI chỉ đề xuất, giáo viên quyết định**; không c�
 
 ```
 docker-compose.yml
+.github/workflows/    # ci.yml: test SQLite, test PostgreSQL, build frontend
 frontend/             # React 19 + Vite + Tailwind, gọi FastAPI (src/api.js)
   Dockerfile  nginx.conf
   src/pages/          # Login, Dashboard, Classes, ClassDetail, Attendance, Grades, Tuition, Users, Coach
@@ -99,7 +115,7 @@ backend/
     routers/          # ENDPOINTS: chỉ lo HTTP + phân quyền (auth users classes attendance scores tuition reports coach ai)
     crud/             # CRUD: toàn bộ truy vấn ORM/SQL (users classes attendance scores tuition coach ai_notes)
     services/         # report.py (pandas), gemini.py (gọi Gemini + dự phòng), coach.py (chấm bài), insights.py (luật rủi ro), insights_ai.py (AI soạn nháp)
-  tests/              # test_api.py (luồng chính) + test_extra.py (phân trang, PUT, lỗi, logging) + test_ai.py (AI hỗ trợ giáo viên) + test_coach.py (AI Coach)
+  tests/              # test_api.py (luồng chính) + test_extra.py (phân trang, PUT, lỗi, logging) + test_ai.py (AI hỗ trợ giáo viên) + test_coach.py (AI Coach) + test_config.py (APP_ENV, bảo vệ CSDL chính)
 docs/postman/         # Postman collection + environment để kiểm thử API
 ```
 
@@ -120,6 +136,8 @@ Bốn lớp theo tài liệu môn học: `models.py` (bảng) → `schemas.py` (
   (tối đa mỗi `OVERDUE_REFRESH_SECONDS` giây một lần, mặc định 3600; tắt bằng `AUTO_OVERDUE_ENABLED=false`). Cũng chạy một lần khi khởi động.
 - **Nhập người dùng từ CSV (`UploadFile`):** `POST /users/import` (admin) nhận file `.csv` tối đa 1 MB, 100 dòng, cột `username, full_name, password, role`;
   không tạo được `admin` bằng CSV. `GET /users/import/template` tải file mẫu. Xóa file CSV sau khi nhập vì có mật khẩu dạng chữ thường.
+- **Bất đồng bộ:** `POST /ai/risk/advice` là ví dụ `async def`: chờ Gemini bằng `httpx.AsyncClient`, còn truy vấn SQLAlchemy (đồng bộ) chạy qua `run_in_threadpool` và trả kết nối CSDL về pool trong lúc chờ.
+  Các endpoint khác vẫn là `def`, FastAPI tự chạy trong threadpool nên cũng không chặn event loop.
 - **Kiểm tra path parameter:** mọi mã trong đường dẫn (`/classes/{id}`...) phải là số nguyên dương, sai trả `422`.
 - **Postman:** import `docs/postman/HKII.postman_collection.json` và `HKII.local.postman_environment.json`,
   chạy "Đăng nhập admin" trước (tự lưu token), rồi chạy cả collection bằng Collection Runner.
@@ -144,4 +162,4 @@ cd frontend && npm install && npm run dev   # http://localhost:5173
 ## Hướng dẫn tiếp theo
 
 - Mở rộng module: chat, thông báo, game, Bonus nếu đề bài yêu cầu.
-- Bổ sung test giao diện (Vitest/Playwright) và CI chạy `pytest` + `npm run build`.
+- Bổ sung test giao diện (Vitest/Playwright).

@@ -96,7 +96,7 @@ def evaluate(student_id: int, full_name: str, statuses: list[AttendanceStatus], 
         if rate < 0.6:
             factors.append(Factor("attendance_very_low", 40, f"Chuyên cần rất thấp ({rate:.0%})"))
         elif rate < 0.8:
-            factors.append(Factor("attendance_low", 20, f"Chuyên cần thấp ({rate:.0%})"))
+            factors.append(Factor("attendance_low", 25, f"Chuyên cần thấp ({rate:.0%})"))
     if streak >= 3:
         factors.append(Factor("absent_streak", 30, f"Vắng liên tiếp {streak} buổi gần nhất"))
     elif streak == 2:
