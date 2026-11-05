@@ -81,7 +81,8 @@ Test đang nằm trong 5 file. Mỗi người chịu trách nhiệm giữ cho c�
 
 ### Cả hai
 - [x] **Đưa code mới nhất lên GitHub:** repo `thaiphatcaifa/HKII-FastAPI`, nhánh `feature/hoan-thien-code`
-- [ ] Mời La Vĩ Quyền và Thầy Trương Trung vào repo, tạo nhánh `main`, mở quyền truy cập trước hạn nộp
+- [x] Tạo nhánh `main` làm nhánh mặc định; đã gửi lời mời cho `laviquyen229` và `Trung3Tech` (05/11/2026)
+- [ ] La Vĩ Quyền và Thầy Trương Trung chấp nhận lời mời; mở quyền truy cập link nộp bài trước hạn
 - [x] Điền bảng thành viên (mục 1) và ngày hạn cho từng giai đoạn (mục 6)
 - [ ] Mỗi người **giảng lại phần của mình** cho người kia (20–30 phút), rồi đổi vai
 - [x] Chạy thử từ bản clone mới trên laptop của Thái Phát (05/11/2026): `docker compose up --build`, đăng nhập, 9 luồng giao diện và 90 test trong container trên SQLite và PostgreSQL đều đạt
