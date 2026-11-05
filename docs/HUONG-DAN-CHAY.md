@@ -89,7 +89,7 @@ docker compose run --rm --no-deps -e TEST_DATABASE_URL=postgresql+psycopg://hkii
 ```
 
 - Lệnh `createdb` chỉ cần chạy một lần; chạy lại sẽ báo `already exists`, bỏ qua được. Sau `docker compose down -v` thì phải tạo lại.
-- Nếu đã đổi `POSTGRES_USER` hoặc `POSTGRES_PASSWORD` trong `.env` thì thay trong lệnh cho khớp.
+- Lệnh trên dùng mật khẩu mặc định khi **không có** file `.env`. Nếu đã chép `.env.example` thành `.env` thì thay `hkii_dev` bằng giá trị `POSTGRES_PASSWORD` trong `.env` (file mẫu là `doi_mat_khau_nay`), và đổi cả `POSTGRES_USER` nếu đã sửa.
 - Mỗi test xóa và tạo lại toàn bộ bảng, nên `conftest.py` từ chối chạy nếu tên CSDL không có chữ `test` hoặc URL trùng `DATABASE_URL`.
 
 Kết quả mong đợi ở cả hai lệnh: `90 passed`. Mỗi lần chạy mất khoảng 1 phút vì băm mật khẩu bcrypt cho dữ liệu mẫu ở mỗi test.
@@ -122,7 +122,7 @@ npm run dev        # http://localhost:5173, tự chuyển /api sang http://local
 |---|---|
 | `failed to connect to the docker API` | Docker Desktop chưa chạy. Mở Docker Desktop, chờ "Engine running", chạy lại lệnh |
 | Web báo **502 Bad Gateway** ngay sau khi khởi động | API chưa khởi động xong (đang chạy migration và nạp dữ liệu). Chờ 10–20 giây rồi tải lại |
-| `port is already allocated` | Cổng bị chiếm. Đổi trong `.env`: `WEB_PORT=8081`, `API_PORT=8001`, `DB_PORT=5434` |
+| `port is already allocated` | Cổng bị chiếm, có thể do một bản HKII cũ tự chạy lại khi bật Docker (xem bằng `docker compose ls`, dừng bản đó bằng `docker compose -p <tên> stop`). Hoặc đổi trong `.env`: `WEB_PORT=8081`, `API_PORT=8001`, `DB_PORT=5434` |
 | Đăng nhập bị báo **423** (khóa tạm) | Nhập sai mật khẩu 5 lần sẽ bị khóa 15 phút. Đợi hoặc `docker compose down -v` để nạp lại dữ liệu |
 | Đổi `SEED_PASSWORD` mà không có tác dụng | Dữ liệu mẫu chỉ nạp khi DB còn trống. Chạy `docker compose down -v` rồi `up` lại |
 | Muốn làm lại từ đầu | `docker compose down -v && docker compose up --build` |

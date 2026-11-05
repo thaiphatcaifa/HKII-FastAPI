@@ -17,4 +17,4 @@ Giảng viên hướng dẫn: Thầy Trương Trung. Thành viên: Thái Phát, 
 - **Review 2:** DFD Level 0 và Level 1, ERD, Entity Attributes, Table Design (9 bảng), Relationship Diagram, Site Map, Algorithm (đăng nhập có khóa tạm, điểm danh theo lớp, AI Coach, nhận xét AI).
 - **Review 3:** ảnh 16 màn hình, Testing Document (90 test tự động pytest, 17 ca kiểm thử tay), Final Checklist.
 
-Sửa sơ đồ: chỉnh file `.dot` rồi chạy `dot -Tpng ten.dot -o ten.png` (Graphviz). Ca kiểm thử số 35 (chạy trên máy sạch bằng Docker) vẫn ở trạng thái Planned.
+Sửa sơ đồ: chỉnh file `.dot` rồi chạy `dot -Tpng ten.dot -o ten.png` (Graphviz). Ca kiểm thử số 35 (chạy từ bản clone mới bằng Docker) đạt ngày 05/11/2026 trên cùng laptop; chạy trên máy khác còn chờ thực hiện.

@@ -68,7 +68,7 @@ docker compose exec db createdb -U hkii hkii_test
 docker compose run --rm --no-deps -e TEST_DATABASE_URL=postgresql+psycopg://hkii:hkii_dev@db:5432/hkii_test api python -m pytest -q
 ```
 
-Nếu đã đổi `POSTGRES_USER` hoặc `POSTGRES_PASSWORD` trong `.env` thì thay trong các lệnh trên cho khớp.
+Lệnh trên dùng mật khẩu mặc định khi **không có** file `.env`. Nếu đã chép `.env.example` thành `.env` thì thay `hkii_dev` bằng giá trị `POSTGRES_PASSWORD` trong `.env` (file mẫu là `doi_mat_khau_nay`), và đổi cả `POSTGRES_USER` nếu đã sửa.
 
 **CI:** `.github/workflows/ci.yml` chạy mỗi lần push và pull request: pytest trên SQLite, pytest trên PostgreSQL (service container), `npm ci` và `npm run build`.
 

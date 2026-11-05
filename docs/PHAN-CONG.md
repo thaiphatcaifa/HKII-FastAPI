@@ -46,7 +46,7 @@ Giao diện của A nhiều hơn (khoảng 1.600 dòng so với 800 dòng của 
 
 ### 2.2. Test theo người
 
-Test đang nằm trong 5 file. Mỗi người chịu trách nhiệm giữ cho các test dưới đây luôn đạt và giải thích được chúng. Lần chạy ngày 05/11/2026: **90 test đạt**, GitHub Actions chạy đạt trên SQLite và PostgreSQL (`docker compose run --rm --no-deps api python -m pytest -q`).
+Test đang nằm trong 5 file. Mỗi người chịu trách nhiệm giữ cho các test dưới đây luôn đạt và giải thích được chúng. Lần chạy ngày 05/11/2026: **90 test đạt** trong Docker và trên GitHub Actions, cả SQLite lẫn PostgreSQL (`docker compose run --rm --no-deps api python -m pytest -q`).
 
 | File | A | B |
 |---|---|---|
@@ -84,7 +84,8 @@ Test đang nằm trong 5 file. Mỗi người chịu trách nhiệm giữ cho c�
 - [ ] Mời La Vĩ Quyền và Thầy Trương Trung vào repo, tạo nhánh `main`, mở quyền truy cập trước hạn nộp
 - [x] Điền bảng thành viên (mục 1) và ngày hạn cho từng giai đoạn (mục 6)
 - [ ] Mỗi người **giảng lại phần của mình** cho người kia (20–30 phút), rồi đổi vai
-- [ ] Chạy thử từ đầu trên máy sạch: `git clone`, `docker compose up --build`, đăng nhập
+- [x] Chạy thử từ bản clone mới trên laptop của Thái Phát (05/11/2026): `docker compose up --build`, đăng nhập, 9 luồng giao diện và 90 test trong container trên SQLite và PostgreSQL đều đạt
+- [ ] Chạy lại các bước trên ở máy của La Vĩ Quyền (máy khác, chưa từng cài project)
 - [ ] Tập demo theo `docs/HUONG-DAN-CHAY.md` (mục 3), có phương án dự phòng
 - [ ] Đọc danh sách câu hỏi bảo vệ (mục 4 cùng file) và tự trả lời không nhìn tài liệu
 - [ ] Kiểm tra quy định của trường về việc **khai báo công cụ AI**, ghi vào báo cáo nếu cần
