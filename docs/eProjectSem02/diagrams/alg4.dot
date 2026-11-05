@@ -1,0 +1,12 @@
+digraph G { graph[dpi=200,fontname="Times-Roman",nodesep=0.4,ranksep=0.35]; node[fontname="Times-Roman",fontsize=11]; edge[fontname="Times-Roman",fontsize=10];
+st[label="Start",shape=ellipse]; in[label="Teacher selects a student in the AI reviews tab",shape=parallelogram];
+perm[label="Teacher manages this class\nand student is enrolled?",shape=diamond]; e403[label="Return 403 / 404",shape=box];
+lim[label="Today's AI uses >= 30?",shape=diamond]; e429[label="Return 429",shape=box];
+num[label="Compute attendance rate and scores\n(numbers only, no names)",shape=box];
+g[label="Gemini available and\nreturns text?",shape=diamond]; rule[label="Rule-based draft",shape=box];
+save[label="Save ai_note\n(kind = review, status = draft)",shape=box];
+edit[label="Teacher reads and edits the draft",shape=parallelogram];
+pub[label="Teacher publishes?",shape=diamond]; keep[label="Stays draft:\nvisible to the teacher only",shape=box];
+done[label="status = published:\nstudent and parent can read it",shape=box]; en[label="End",shape=ellipse];
+st->in->perm; perm->e403[label="No"]; perm->lim[label="Yes"]; lim->e429[label="Yes"]; lim->num[label="No"]; num->g; g->save[label="Yes (gemini)"]; g->rule[label="No"]; rule->save[label="provider = rules"]; save->edit->pub; pub->keep[label="No"]; pub->done[label="Yes"]; done->en; keep->en; e403->en; e429->en;
+}

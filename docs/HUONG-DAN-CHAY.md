@@ -21,8 +21,8 @@ Không cần cài Python, Node hay PostgreSQL trên máy: tất cả chạy tron
 ### 1.2 Các bước
 
 ```bash
-git clone https://github.com/laviquyen229/ProjectHKII.git
-cd ProjectHKII
+git clone https://github.com/thaiphatcaifa/HKII-FastAPI.git
+cd HKII-FastAPI
 
 # (khuyến nghị) tạo file cấu hình riêng, đổi mật khẩu DB và SECRET_KEY
 cp .env.example .env
@@ -178,7 +178,7 @@ Chuẩn bị trước: chạy `docker compose up -d` ít nhất 1 phút trước
 3. Đăng xuất, đăng nhập **`ph.an`** (con là `hv01`): trang **Tổng quan** hiện thẻ **Nhận xét của giáo viên**. Nếu giáo viên chưa công bố thì phụ huynh không thấy gì.
 4. Quay lại giáo viên, bấm **Thu hồi**: thẻ biến mất ở phía phụ huynh.
 
-**Phương án dự phòng nếu demo hỏng:** dùng ảnh chụp màn hình trong slide (slide 8–12) và mở Swagger để minh họa API.
+**Phương án dự phòng nếu demo hỏng:** dùng ảnh chụp màn hình trong slide (slide 8–13) và mở Swagger để minh họa API.
 
 ---
 

@@ -1,0 +1,25 @@
+graph G { layout=neato; overlap=false; sep="+12"; graph[dpi=200,fontname="Times-Roman"]; node[fontname="Times-Roman",fontsize=12,shape=ellipse]; edge[len=1.7];
+ai_notes[shape=box,style=bold,width=1.6];
+id[label=<<u>id</u>>];
+"kind"[label="kind"];
+"class_id"[label="class_id"];
+"student_id"[label="student_id"];
+"author_id"[label="author_id"];
+"content"[label="content"];
+"provider"[label="provider"];
+"status"[label="status"];
+"created_at"[label="created_at"];
+"updated_at"[label="updated_at"];
+"published_at"[label="published_at"];
+ai_notes--"id";
+ai_notes--"kind";
+ai_notes--"class_id";
+ai_notes--"student_id";
+ai_notes--"author_id";
+ai_notes--"content";
+ai_notes--"provider";
+ai_notes--"status";
+ai_notes--"created_at";
+ai_notes--"updated_at";
+ai_notes--"published_at";
+}

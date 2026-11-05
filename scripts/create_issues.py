@@ -23,7 +23,7 @@ try:
 except Exception:
     pass
 
-DEFAULT_REPO = "laviquyen229/ProjectHKII"
+DEFAULT_REPO = "thaiphatcaifa/HKII-FastAPI"
 
 LABELS = {
     "thành viên A": ("1d4ed8", "Việc của thành viên A (học vụ và dữ liệu)"),
@@ -355,7 +355,7 @@ Cả hai cùng giải thích được toàn bộ hệ thống khi bảo vệ.
 Chắc chắn người khác (giảng viên) clone repo về là chạy được.
 
 ## Việc cần làm
-- [ ] Clone repo vào thư mục mới hoặc máy khác: `git clone https://github.com/laviquyen229/ProjectHKII.git`
+- [ ] Clone repo vào thư mục mới hoặc máy khác: `git clone https://github.com/thaiphatcaifa/HKII-FastAPI.git`
 - [ ] Làm đúng theo `docs/HUONG-DAN-CHAY.md`: `cp .env.example .env`, `docker compose up --build`
 - [ ] Đăng nhập thử đủ 4 vai trò bằng tài khoản mẫu
 - [ ] Ghi lại mọi chỗ vướng và sửa tài liệu cho khớp

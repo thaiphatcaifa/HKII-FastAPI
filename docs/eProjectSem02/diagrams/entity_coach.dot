@@ -1,0 +1,21 @@
+graph G { layout=neato; overlap=false; sep="+12"; graph[dpi=200,fontname="Times-Roman"]; node[fontname="Times-Roman",fontsize=12,shape=ellipse]; edge[len=1.7];
+coach_sessions[shape=box,style=bold,width=1.6];
+id[label=<<u>id</u>>];
+"user_id"[label="user_id"];
+"kind"[label="kind"];
+"input_text"[label="input_text"];
+"feedback"[label="feedback"];
+"provider"[label="provider"];
+"analysis"[label="analysis"];
+"overall"[label="overall"];
+"created_at"[label="created_at"];
+coach_sessions--"id";
+coach_sessions--"user_id";
+coach_sessions--"kind";
+coach_sessions--"input_text";
+coach_sessions--"feedback";
+coach_sessions--"provider";
+coach_sessions--"analysis";
+coach_sessions--"overall";
+coach_sessions--"created_at";
+}

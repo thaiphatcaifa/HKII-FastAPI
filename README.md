@@ -1,4 +1,4 @@
-# HKII – FastAPI + PostgreSQL + Docker
+# EduCenter Management System (HKII) – FastAPI + PostgreSQL + Docker
 
 Đồ án cuối kỳ: viết lại backend của hệ thống quản lý trung tâm (trước đây chạy trên Firebase Realtime
 Database + Cloud Functions) bằng **FastAPI**, **PostgreSQL** và **Docker**. Phần AI và báo cáo viết bằng Python.
@@ -8,7 +8,8 @@ Database + Cloud Functions) bằng **FastAPI**, **PostgreSQL** và **Docker**. P
 ## Tài liệu
 
 - [Hướng dẫn chạy dự án, kịch bản demo và câu hỏi bảo vệ](docs/HUONG-DAN-CHAY.md)
-- Bài thuyết trình: `docs/HKII-ThuyetTrinh.pptx` (17 slide, có ghi chú lời nói ở từng slide)
+- Bài thuyết trình: `docs/HKII-ThuyetTrinh.pptx` (18 slide, có ghi chú lời nói ở từng slide)
+- [Tài liệu thiết kế eProject (Review 1, 2, 3, kiểm thử, Task Sheet)](docs/eProjectSem02/README.md)
 - [Phân công công việc nhóm](docs/PHAN-CONG.md)
 
 ## 5 module
