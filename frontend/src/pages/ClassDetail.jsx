@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import {
   CalendarCheck,
   ChartNoAxesColumn,
+  Clock,
   Download,
   GraduationCap,
   MessageSquareText,
@@ -17,17 +18,18 @@ import { api, download } from '../api'
 import { useAuth } from '../auth'
 import { ReviewsTab, RiskTab } from '../components/AiTabs'
 import { useConfirm, useToast } from '../components/feedback'
+import Hero from '../components/Hero'
 import Tabs from '../components/Tabs'
 import {
   ATTENDANCE,
   Avatar,
   Badge,
+  ClassMark,
   EmptyRow,
   ErrorBox,
   Field,
   Loading,
   Metric,
-  PageTitle,
   ProgressBar,
   ScoreChip,
   SearchBox,
@@ -744,18 +746,26 @@ export default function ClassDetail() {
 
   return (
     <>
-      <PageTitle
+      <Hero
+        compact
+        docTitle={classroom.name}
+        eyebrow={classroom.code}
         title={classroom.name}
-        subtitle={`${classroom.code} · ${classroom.schedule || 'Chưa có lịch học'} · ${students.length} học viên`}
         back={{ to: '/classes', label: 'Lớp học' }}
-      >
-        {user.role === 'admin' && !editingClass && (
-          <button className="btn-ghost" onClick={() => setEditingClass(true)}>
-            <Pencil className="h-4 w-4" />
-            Sửa thông tin lớp
-          </button>
-        )}
-      </PageTitle>
+        lead={<ClassMark code={classroom.code} large />}
+        chips={[
+          [Users, `${students.length} học viên`],
+          [Clock, classroom.schedule || 'Chưa có lịch học'],
+        ]}
+        action={
+          user.role === 'admin' && !editingClass ? (
+            <button className="btn-ghost" onClick={() => setEditingClass(true)}>
+              <Pencil className="h-4 w-4" />
+              Sửa thông tin lớp
+            </button>
+          ) : null
+        }
+      />
       {editingClass && (
         <EditClass
           classroom={classroom}

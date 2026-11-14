@@ -87,7 +87,7 @@ export default function Grades() {
               )
             })}
           </div>
-          <p className="mb-5 text-xs text-slate-400">
+          <p className="mb-5 text-xs text-slate-600">
             {summary.length > 1 ? 'Bấm vào một lớp để chỉ xem điểm của lớp đó. ' : ''}
             Điểm tô màu: từ 8 trở lên là tốt, từ 5 đến dưới 8 là khá, dưới 5 cần cố gắng thêm.
           </p>
@@ -131,7 +131,7 @@ export default function Grades() {
               </tbody>
             </table>
           </div>
-          <p className="mt-3 text-sm text-slate-500">{shown.length} đầu điểm</p>
+          <p className="mt-3 text-sm text-slate-600">{shown.length} đầu điểm</p>
         </>
       )}
     </>

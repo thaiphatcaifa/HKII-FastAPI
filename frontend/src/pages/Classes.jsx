@@ -164,7 +164,7 @@ export default function Classes() {
               className="card group flex flex-col gap-4 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md"
             >
               <div className="flex items-start gap-4">
-                <ClassMark code={c.code} index={data.classes.indexOf(c)} large />
+                <ClassMark code={c.code} large />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold text-slate-900 group-hover:text-indigo-700">{c.name}</div>
                   <span className="mt-1 inline-block rounded-lg bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700">
