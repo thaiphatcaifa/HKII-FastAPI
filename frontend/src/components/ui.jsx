@@ -245,6 +245,28 @@ export function Avatar({ name, size = 'md' }) {
   )
 }
 
+const CLASS_COLORS = [
+  'from-indigo-500 to-violet-500',
+  'from-sky-500 to-cyan-500',
+  'from-emerald-500 to-teal-500',
+  'from-amber-500 to-orange-500',
+  'from-rose-500 to-pink-500',
+]
+
+// Ô vuông màu mang hai chữ đầu của mã lớp; index quyết định màu để các lớp khác nhau dễ phân biệt
+export function ClassMark({ code, index = 0, large = false }) {
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center bg-gradient-to-br font-bold text-white ${
+        CLASS_COLORS[index % CLASS_COLORS.length]
+      } ${large ? 'h-14 w-14 rounded-2xl text-sm' : 'h-11 w-11 rounded-xl text-xs'}`}
+      aria-hidden="true"
+    >
+      {String(code || '?').slice(0, 2)}
+    </div>
+  )
+}
+
 // Ô tìm kiếm có biểu tượng kính lúp và nút xóa nhanh
 export function SearchBox({ value, onChange, placeholder = 'Tìm kiếm…', className = '' }) {
   return (
@@ -356,6 +378,20 @@ export function ScoreChip({ value, max = 10 }) {
   )
 }
 
+// Màu theo ngưỡng của luật rủi ro ở backend (services/insights.py):
+// chuyên cần dưới 60% là rất thấp, dưới 80% là thấp; điểm trung bình dưới 5 là rất thấp, dưới 6.5 là thấp.
+const TEXT_TONE = { green: 'text-emerald-600', amber: 'text-amber-600', red: 'text-rose-600', gray: 'text-slate-400' }
+
+export const attendanceTone = (rate) =>
+  rate === null || rate === undefined ? 'gray' : rate < 0.6 ? 'red' : rate < 0.8 ? 'amber' : 'green'
+export const averageTone = (avg) =>
+  avg === null || avg === undefined ? 'gray' : avg < 5 ? 'red' : avg < 6.5 ? 'amber' : 'green'
+
+// Con số được tô màu theo tone ('green' | 'amber' | 'red' | 'gray')
+export const Metric = ({ tone = 'gray', children }) => (
+  <span className={`font-semibold tabular-nums ${TEXT_TONE[tone]}`}>{children}</span>
+)
+
 export const ATTENDANCE = {
   present: { label: 'Có mặt', tone: 'green' },
   late: { label: 'Đi trễ', tone: 'amber' },
@@ -367,6 +403,17 @@ export const TUITION = {
   unpaid: { label: 'Chưa đóng', tone: 'amber' },
   paid: { label: 'Đã đóng', tone: 'green' },
   overdue: { label: 'Quá hạn', tone: 'red' },
+}
+
+// Nhãn tiếng Việt cho các loại điểm hay dùng; loại khác giữ nguyên chữ giáo viên nhập (viết hoa chữ đầu)
+export function scoreKindLabel(kind) {
+  const k = String(kind || '').trim()
+  const lower = k.toLowerCase()
+  if (lower === 'midterm') return 'Giữa kỳ'
+  if (lower === 'final') return 'Cuối kỳ'
+  const quiz = /^quiz[\s_-]*(\d+)?$/.exec(lower)
+  if (quiz) return quiz[1] ? `Quiz ${quiz[1]}` : 'Quiz'
+  return k ? k.charAt(0).toUpperCase() + k.slice(1) : '—'
 }
 
 // Chuỗi 'YYYY-MM-DD' phải đọc theo giờ địa phương, nếu không sẽ lệch ngày ở múi giờ phía tây Greenwich

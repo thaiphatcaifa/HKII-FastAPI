@@ -23,9 +23,12 @@ import {
   ErrorBox,
   Field,
   Loading,
+  Metric,
   ProgressBar,
   Segmented,
   Spinner,
+  attendanceTone,
+  averageTone,
   fmtDate,
   fmtScore,
   percent,
@@ -42,16 +45,6 @@ const LEVEL = {
   medium: { label: 'Rủi ro trung bình', tone: 'amber', bar: 'amber' },
   low: { label: 'Ổn định', tone: 'green', bar: 'green' },
 }
-
-// Ngưỡng màu khớp luật ở backend (services/insights.py): chuyên cần < 60% rất thấp, < 80% thấp;
-// điểm trung bình < 5 rất thấp, < 6.5 thấp.
-const TEXT_TONE = { green: 'text-emerald-600', amber: 'text-amber-600', red: 'text-rose-600', gray: 'text-slate-400' }
-const attendanceTone = (rate) => (rate === null || rate === undefined ? 'gray' : rate < 0.6 ? 'red' : rate < 0.8 ? 'amber' : 'green')
-const averageTone = (avg) => (avg === null || avg === undefined ? 'gray' : avg < 5 ? 'red' : avg < 6.5 ? 'amber' : 'green')
-
-const Metric = ({ tone, children }) => (
-  <span className={`font-semibold tabular-nums ${TEXT_TONE[tone]}`}>{children}</span>
-)
 
 const NameCell = ({ name }) => (
   <div className="flex items-center gap-3">
