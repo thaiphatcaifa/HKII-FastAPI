@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { CalendarCheck, Sparkles, Wallet } from 'lucide-react'
+import { CalendarCheck, Eye, EyeOff, Sparkles, Wallet } from 'lucide-react'
 import { useAuth } from '../auth'
-import { ErrorBox, Field } from '../components/ui'
+import { ErrorBox, Field, Spinner } from '../components/ui'
 
 const FEATURES = [
   [CalendarCheck, 'Điểm danh và điểm số', 'Ghi nhận từng buổi học, tổng hợp chuyên cần và điểm trung bình.'],
@@ -17,6 +17,11 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  useEffect(() => {
+    document.title = 'Đăng nhập · HKII'
+  }, [])
 
   if (user) return <Navigate to="/" replace />
 
@@ -88,16 +93,27 @@ export default function Login() {
             />
           </Field>
           <Field label="Mật khẩu">
-            <input
-              className="input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
+            <div className="relative">
+              <input
+                className="input !pr-11"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </Field>
           <button className="btn-primary w-full py-3" disabled={busy}>
+            {busy && <Spinner />}
             {busy ? 'Đang đăng nhập…' : 'Đăng nhập'}
           </button>
         </form>
