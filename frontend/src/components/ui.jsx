@@ -106,8 +106,8 @@ export function PageTitle({ title, subtitle, back, children }) {
       )}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
-          {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
+          <h1 className="text-balance text-[26px] font-extrabold leading-tight tracking-tight text-slate-900">{title}</h1>
+          {subtitle && <p className="mt-1 text-sm text-slate-600">{subtitle}</p>}
         </div>
         {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
       </div>
@@ -160,36 +160,80 @@ export function EmptyRow({ cols, children }) {
 // Khối trống dùng ngoài bảng (danh sách thẻ, trang chưa có dữ liệu)
 export function EmptyState({ icon: Icon = Inbox, title, children }) {
   return (
-    <div className="card flex flex-col items-center py-12 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-        <Icon className="h-6 w-6" />
+    <div className="card flex flex-col items-center py-14 text-center">
+      <div className="relative mb-5 flex h-24 w-24 items-center justify-center" aria-hidden="true">
+        <span className="absolute inset-0 rounded-full bg-indigo-50" />
+        <span className="absolute inset-3 rounded-full bg-indigo-100/70" />
+        <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-indigo-500 shadow-md ring-1 ring-indigo-100">
+          <Icon className="h-7 w-7" />
+        </span>
       </div>
-      <div className="font-semibold text-slate-900">{title}</div>
-      {children && <div className="mt-1 max-w-sm text-sm text-slate-500">{children}</div>}
+      <div className="font-display text-base font-bold text-slate-900">{title}</div>
+      {children && <div className="mt-1.5 max-w-sm text-sm text-slate-500">{children}</div>}
     </div>
   )
 }
 
-const STAT_TONES = {
-  indigo: 'bg-indigo-50 text-indigo-600',
-  emerald: 'bg-emerald-50 text-emerald-600',
-  amber: 'bg-amber-50 text-amber-600',
-  rose: 'bg-rose-50 text-rose-600',
-  sky: 'bg-sky-50 text-sky-600',
+// Số đếm tăng dần từ 0 (hoặc từ giá trị trước) tới value; tôn trọng chế độ "giảm chuyển động"
+export function AnimatedNumber({ value, format = (n) => String(Math.round(n)), duration = 900 }) {
+  const [shown, setShown] = useState(0)
+  const from = useRef(0)
+
+  useEffect(() => {
+    if (typeof value !== 'number' || Number.isNaN(value)) return undefined
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      from.current = value
+      setShown(value)
+      return undefined
+    }
+    const start = performance.now()
+    const origin = from.current
+    let frame
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration)
+      const next = origin + (value - origin) * (1 - Math.pow(1 - t, 3))
+      from.current = next
+      setShown(next)
+      if (t < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [value, duration])
+
+  return <>{format(typeof value === 'number' ? shown : value)}</>
 }
 
-// Biểu tượng ở góc phải để con số được dùng hết chiều ngang thẻ (số tiền lớn không bị cắt)
-export function StatCard({ icon: Icon, tone = 'indigo', label, value, hint }) {
+// Biểu tượng nền chuyển màu kèm quầng sáng cùng tông
+const STAT_TONES = {
+  indigo: { badge: 'from-indigo-500 to-violet-500 shadow-indigo-500/30', wash: 'from-indigo-500 to-violet-500' },
+  emerald: { badge: 'from-emerald-500 to-teal-500 shadow-emerald-500/30', wash: 'from-emerald-500 to-teal-500' },
+  amber: { badge: 'from-amber-400 to-orange-500 shadow-amber-500/30', wash: 'from-amber-400 to-orange-500' },
+  rose: { badge: 'from-rose-500 to-pink-500 shadow-rose-500/30', wash: 'from-rose-500 to-pink-500' },
+  sky: { badge: 'from-sky-500 to-cyan-500 shadow-sky-500/30', wash: 'from-sky-500 to-cyan-500' },
+}
+
+// Số liệu lớn kèm biểu tượng. Truyền value là số thì tự chạy hiệu ứng đếm; với số tiền thì truyền amount và format.
+export function StatCard({ icon: Icon, tone = 'indigo', label, value, amount, format, hint }) {
+  const t = STAT_TONES[tone]
+  const counted = typeof amount === 'number' ? amount : typeof value === 'number' ? value : null
   return (
-    <div className="card !p-4 sm:!p-5">
-      <div className="flex items-start justify-between gap-3">
+    <div className="card relative overflow-hidden !p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:!p-5">
+      <div
+        className={`pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gradient-to-br opacity-[0.09] ${t.wash}`}
+        aria-hidden="true"
+      />
+      <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0 text-sm font-medium text-slate-500">{label}</div>
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${STAT_TONES[tone]}`}>
-          <Icon className="h-[18px] w-[18px]" />
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg ${t.badge}`}
+        >
+          <Icon className="h-5 w-5" />
         </div>
       </div>
-      <div className="mt-2 whitespace-nowrap text-2xl font-bold tabular-nums tracking-tight text-slate-900">{value}</div>
-      {hint && <div className="mt-0.5 text-xs text-slate-500">{hint}</div>}
+      <div className="relative mt-3 whitespace-nowrap font-display text-[28px] font-extrabold leading-none tracking-tight text-slate-900 tabular-nums">
+        {counted !== null ? <AnimatedNumber value={counted} format={format} /> : value}
+      </div>
+      {hint && <div className="relative mt-2 text-xs text-slate-500">{hint}</div>}
     </div>
   )
 }
@@ -207,7 +251,7 @@ export function Ring({ value, color = '#4f46e5', label, caption, display, compac
         role="img"
         aria-label={`${label}: ${Math.round(v * 100)}%`}
       >
-        <circle cx="50" cy="50" r={r} fill="none" stroke="#e2e8f0" strokeWidth="10" />
+        <circle cx="50" cy="50" r={r} fill="none" stroke="#eceef6" strokeWidth="10" />
         <circle
           cx="50"
           cy="50"
@@ -217,12 +261,12 @@ export function Ring({ value, color = '#4f46e5', label, caption, display, compac
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={`${c * v} ${c}`}
-          style={{ transition: 'stroke-dasharray 600ms ease-out' }}
+          style={{ transition: 'stroke-dasharray 800ms cubic-bezier(0.2, 0.7, 0.2, 1)', filter: `drop-shadow(0 2px 4px ${color}55)` }}
         />
       </svg>
       <div>
         <div className="text-sm font-medium text-slate-500">{label}</div>
-        <div className={`${compact ? 'text-2xl' : 'text-3xl'} font-bold tracking-tight text-slate-900`}>
+        <div className={`${compact ? 'text-2xl' : 'text-3xl'} font-display font-extrabold tracking-tight text-slate-900`}>
           {display ?? (value === null || value === undefined ? '—' : `${Math.round(v * 100)}%`)}
         </div>
         {caption && <div className="mt-0.5 text-xs text-slate-500">{caption}</div>}
@@ -231,13 +275,27 @@ export function Ring({ value, color = '#4f46e5', label, caption, display, compac
   )
 }
 
+const AVATAR_COLORS = [
+  'from-indigo-500 to-violet-500',
+  'from-sky-500 to-cyan-500',
+  'from-emerald-500 to-teal-500',
+  'from-amber-500 to-orange-500',
+  'from-rose-500 to-pink-500',
+  'from-fuchsia-500 to-purple-500',
+  'from-blue-500 to-indigo-500',
+  'from-teal-500 to-sky-500',
+]
+
+// Mỗi người một màu cố định (theo tên) để dễ phân biệt trong danh sách
+const colorOf = (name) => AVATAR_COLORS[[...String(name || '?')].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % AVATAR_COLORS.length]
+
 export function Avatar({ name, size = 'md' }) {
   const parts = (name || '?').trim().split(/\s+/)
   const initials = (parts.length > 1 ? parts[parts.length - 2][0] + parts[parts.length - 1][0] : parts[0][0]).toUpperCase()
   const sizes = { sm: 'h-8 w-8 text-xs', md: 'h-10 w-10 text-sm', lg: 'h-12 w-12 text-base' }
   return (
     <div
-      className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 font-semibold text-white ${sizes[size]}`}
+      className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-display font-bold text-white shadow-sm ring-2 ring-white ${colorOf(name)} ${sizes[size]}`}
       aria-hidden="true"
     >
       {initials}
@@ -253,13 +311,14 @@ const CLASS_COLORS = [
   'from-rose-500 to-pink-500',
 ]
 
-// Ô vuông màu mang hai chữ đầu của mã lớp; index quyết định màu để các lớp khác nhau dễ phân biệt
-export function ClassMark({ code, index = 0, large = false }) {
+// Ô vuông màu mang hai chữ đầu của mã lớp. Màu lấy theo mã lớp nên một lớp luôn cùng màu ở mọi trang.
+export function ClassMark({ code, large = false }) {
+  const hash = [...String(code || '?')].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 11)
   return (
     <div
-      className={`flex shrink-0 items-center justify-center bg-gradient-to-br font-bold text-white ${
-        CLASS_COLORS[index % CLASS_COLORS.length]
-      } ${large ? 'h-14 w-14 rounded-2xl text-sm' : 'h-11 w-11 rounded-xl text-xs'}`}
+      className={`flex shrink-0 items-center justify-center bg-gradient-to-br font-display font-extrabold text-white shadow-md ${
+        CLASS_COLORS[hash % CLASS_COLORS.length]
+      } ${large ? 'h-14 w-14 rounded-2xl text-base' : 'h-11 w-11 rounded-xl text-sm'}`}
       aria-hidden="true"
     >
       {String(code || '?').slice(0, 2)}
@@ -309,7 +368,7 @@ export function Segmented({ options, value, onChange, label }) {
             aria-pressed={on}
             onClick={() => onChange(o.value)}
             className={`inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
-              on ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              on ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             {Icon && <Icon className="h-4 w-4" />}
@@ -373,14 +432,14 @@ export function ScoreChip({ value, max = 10 }) {
       className={`inline-flex items-baseline gap-1 whitespace-nowrap rounded-lg px-2 py-0.5 text-sm font-bold tabular-nums ring-1 ring-inset ${SCORE_TONES[scoreTone(value, max)]}`}
     >
       {fmtScore(value)}
-      <span className="text-xs font-medium opacity-60">/ {fmtScore(max)}</span>
+      <span className="text-xs font-medium">/ {fmtScore(max)}</span>
     </span>
   )
 }
 
 // Màu theo ngưỡng của luật rủi ro ở backend (services/insights.py):
 // chuyên cần dưới 60% là rất thấp, dưới 80% là thấp; điểm trung bình dưới 5 là rất thấp, dưới 6.5 là thấp.
-const TEXT_TONE = { green: 'text-emerald-600', amber: 'text-amber-600', red: 'text-rose-600', gray: 'text-slate-400' }
+const TEXT_TONE = { green: 'text-emerald-700', amber: 'text-amber-700', red: 'text-rose-600', gray: 'text-slate-500' }
 
 export const attendanceTone = (rate) =>
   rate === null || rate === undefined ? 'gray' : rate < 0.6 ? 'red' : rate < 0.8 ? 'amber' : 'green'
