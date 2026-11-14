@@ -41,9 +41,9 @@ function DueHint({ row }) {
   }
   const days = daysFromToday(row.due_date)
   if (days < 0) return <span className="text-xs font-medium text-rose-600">Trễ {-days} ngày</span>
-  if (days === 0) return <span className="text-xs font-medium text-amber-600">Đến hạn hôm nay</span>
+  if (days === 0) return <span className="text-xs font-medium text-amber-700">Đến hạn hôm nay</span>
   return (
-    <span className={`text-xs ${days <= 7 ? 'font-medium text-amber-600' : 'text-slate-500'}`}>Còn {days} ngày</span>
+    <span className={`text-xs ${days <= 7 ? 'font-medium text-amber-700' : 'text-slate-500'}`}>Còn {days} ngày</span>
   )
 }
 
@@ -386,7 +386,7 @@ function AdminTuition() {
         emptyHint={q || status ? 'Thử đổi bộ lọc hoặc từ khóa tìm kiếm.' : 'Bấm "Tạo khoản" để thêm khoản học phí đầu tiên.'}
       />
       {visible.length > 0 && (
-        <p className="mt-3 text-sm text-slate-500">
+        <p className="mt-3 text-sm text-slate-600">
           Hiển thị {visible.length} khoản · tổng <b className="tabular-nums text-slate-700">{money(shownTotal)}</b>
         </p>
       )}

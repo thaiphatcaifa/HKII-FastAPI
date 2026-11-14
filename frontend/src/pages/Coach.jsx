@@ -1,25 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
+  BookOpen,
   ChevronRight,
   CircleCheck,
   Lightbulb,
+  Link2,
+  ListChecks,
   MessageSquareText,
   Mic,
   PenLine,
   ShieldAlert,
   Sparkles,
+  SpellCheck,
   TrendingUp,
   Trophy,
   WandSparkles,
 } from 'lucide-react'
 import { api } from '../api'
 import { useToast } from '../components/feedback'
+import Hero from '../components/Hero'
 import {
   Badge,
   EmptyState,
   ErrorBox,
-  PageTitle,
   ProgressBar,
   Ring,
   ScoreChip,
@@ -298,7 +302,24 @@ export default function Coach() {
 
   return (
     <>
-      <PageTitle title="AI Coach" subtitle="Chấm bài viết hoặc bài nói tiếng Anh của bạn theo từng tiêu chí." />
+      <Hero
+        compact
+        docTitle="AI Coach"
+        eyebrow="Luyện viết và nói"
+        title="AI Coach"
+        subtitle="Chấm bài viết hoặc bài nói tiếng Anh của bạn theo từng tiêu chí."
+        lead={
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md">
+            <Sparkles className="h-7 w-7" />
+          </div>
+        }
+        chips={[
+          [SpellCheck, 'Ngữ pháp'],
+          [BookOpen, 'Từ vựng'],
+          [Link2, 'Mạch lạc'],
+          [ListChecks, 'Triển khai ý'],
+        ]}
+      />
 
       <form onSubmit={submit} className="card space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -345,7 +366,7 @@ export default function Coach() {
             <span className="tabular-nums text-slate-500">
               {words} từ · {text.length}/{MAX_CHARS} ký tự
             </span>
-            <span className={tooShort ? 'text-amber-600' : 'text-emerald-600'}>
+            <span className={tooShort ? 'text-amber-700' : 'text-emerald-700'}>
               {tooShort ? `Cần thêm ${MIN_CHARS - chars} ký tự nữa` : 'Đủ độ dài để chấm'}
             </span>
           </div>
@@ -374,7 +395,7 @@ export default function Coach() {
                 <Badge tone={(PROVIDER[result.provider] || PROVIDER.rules).tone}>
                   {(PROVIDER[result.provider] || PROVIDER.rules).label}
                 </Badge>
-                <span className="text-xs text-slate-400">{fmtDateTime(result.created_at)}</span>
+                <span className="text-xs text-slate-500">{fmtDateTime(result.created_at)}</span>
               </div>
             )}
           </div>

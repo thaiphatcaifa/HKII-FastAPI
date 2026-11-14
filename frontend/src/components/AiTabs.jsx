@@ -344,7 +344,7 @@ export function ReviewsTab({ classId, students }) {
                       {n.status === 'published' ? 'Đã công bố' : 'Bản nháp'}
                     </Badge>
                     <ProviderBadge provider={n.provider} />
-                    <span className="ml-auto text-xs text-slate-400">{fmtDate(n.created_at)}</span>
+                    <span className="ml-auto text-xs text-slate-500">{fmtDate(n.created_at)}</span>
                   </div>
                   {isEditing ? (
                     <div>
@@ -358,7 +358,7 @@ export function ReviewsTab({ classId, students }) {
                       />
                       <div className="mt-1 text-right text-xs tabular-nums text-slate-500">
                         {editing.text.length}/{MAX_REVIEW} ký tự
-                        {len < MIN_REVIEW && <span className="text-amber-600"> · tối thiểu {MIN_REVIEW} ký tự</span>}
+                        {len < MIN_REVIEW && <span className="text-amber-700"> · tối thiểu {MIN_REVIEW} ký tự</span>}
                       </div>
                     </div>
                   ) : (
@@ -459,7 +459,7 @@ export function PublishedReviews({ studentId }) {
       {data.map((n) => (
         <div key={n.id} className="rounded-xl border-l-4 border-indigo-300 bg-slate-50 px-4 py-3">
           <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{n.content}</p>
-          <div className="mt-2 text-xs text-slate-400">{fmtDate(n.published_at || n.created_at)}</div>
+          <div className="mt-2 text-xs text-slate-500">{fmtDate(n.published_at || n.created_at)}</div>
         </div>
       ))}
     </div>
