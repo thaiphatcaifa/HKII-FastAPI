@@ -103,8 +103,8 @@ export function RiskTab({ classId }) {
               type="button"
               aria-pressed={on}
               onClick={() => setFilter(on ? 'all' : level)}
-              className={`card flex items-center gap-3.5 !p-4 text-left transition hover:border-indigo-300 ${
-                on ? '!border-indigo-400 ring-2 ring-indigo-200' : ''
+              className={`card flex items-center gap-3.5 !p-4 text-left transition hover:border-brand-300 ${
+                on ? '!border-brand-400 ring-2 ring-brand-200' : ''
               }`}
             >
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconTone}`}>
@@ -207,13 +207,13 @@ export function RiskTab({ classId }) {
                 </tr>
                 {advice[r.student_id] && (
                   <tr className="hover:!bg-transparent">
-                    <td colSpan={6} className="bg-indigo-50/50 px-4 py-4">
+                    <td colSpan={6} className="bg-brand-50/50 px-4 py-4">
                       <div className="flex items-start gap-3">
-                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
                           <Sparkles className="h-4 w-4" />
                         </span>
                         <div className="min-w-0">
-                          <div className="mb-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-indigo-900">
+                          <div className="mb-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-brand-900">
                             Gợi ý cho giáo viên
                             <ProviderBadge provider={advice[r.student_id].provider} />
                           </div>
@@ -451,13 +451,13 @@ export function PublishedReviews({ studentId }) {
   return (
     <div className="card mt-6 space-y-3">
       <div className="flex items-center gap-2 font-semibold text-slate-900">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
           <MessageSquareText className="h-[18px] w-[18px]" />
         </span>
         Nhận xét của giáo viên
       </div>
       {data.map((n) => (
-        <div key={n.id} className="rounded-xl border-l-4 border-indigo-300 bg-slate-50 px-4 py-3">
+        <div key={n.id} className="rounded-xl border-l-4 border-brand-300 bg-slate-50 px-4 py-3">
           <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{n.content}</p>
           <div className="mt-2 text-xs text-slate-500">{fmtDate(n.published_at || n.created_at)}</div>
         </div>

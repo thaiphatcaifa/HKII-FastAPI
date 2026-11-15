@@ -208,41 +208,62 @@ function ProgressChart({ points }) {
         <svg width={W} height={H} role="img" aria-label="Biểu đồ điểm tổng theo thời gian">
           <defs>
             <linearGradient id="coach-area" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.22" />
-              <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+              <stop offset="0%" style={{ stopColor: 'rgb(var(--brand-500))', stopOpacity: 0.22 }} />
+              <stop offset="100%" style={{ stopColor: 'rgb(var(--brand-500))', stopOpacity: 0 }} />
             </linearGradient>
           </defs>
           {[0, 2, 4, 6, 8, 10].map((v) => (
             <g key={v}>
-              <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray={v === 0 ? undefined : '3 4'} />
-              <text x={pad.l - 8} y={y(v) + 4} textAnchor="end" fontSize="11" fill="#94a3b8">
+              <line
+                x1={pad.l}
+                x2={W - pad.r}
+                y1={y(v)}
+                y2={y(v)}
+                strokeDasharray={v === 0 ? undefined : '3 4'}
+                style={{ stroke: 'rgb(var(--neutral-200))' }}
+              />
+              <text x={pad.l - 8} y={y(v) + 4} textAnchor="end" fontSize="11" style={{ fill: 'rgb(var(--neutral-500))' }}>
                 {v}
               </text>
             </g>
           ))}
           <path d={area} fill="url(#coach-area)" />
-          <path d={line} fill="none" stroke="#818cf8" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+          <path
+            d={line}
+            fill="none"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            style={{ stroke: 'rgb(var(--brand-400))' }}
+          />
           {points.map((p, i) => (
             <circle
               key={p.id}
               cx={x(i)}
               cy={y(p.overall)}
               r={i === n - 1 ? 6 : 4.5}
-              fill={p.provider === 'gemini' ? '#4f46e5' : '#94a3b8'}
               stroke="#fff"
               strokeWidth="2"
+              style={{ fill: p.provider === 'gemini' ? 'rgb(var(--brand-600))' : 'rgb(var(--neutral-400))' }}
             >
               <title>{`${fmtDateTime(p.created_at)}: ${fmtScore(p.overall)}/10 (${(PROVIDER[p.provider] || PROVIDER.rules).label})`}</title>
             </circle>
           ))}
-          <text x={x(n - 1)} y={y(last.overall) - 14} textAnchor="middle" fontSize="12" fontWeight="700" fill="#312e81">
+          <text
+            x={x(n - 1)}
+            y={y(last.overall) - 14}
+            textAnchor="middle"
+            fontSize="12"
+            fontWeight="700"
+            style={{ fill: 'rgb(var(--brand-900))' }}
+          >
             {fmtScore(last.overall)}
           </text>
-          <text x={x(0)} y={H - 8} textAnchor={n === 1 ? 'middle' : 'start'} fontSize="11" fill="#94a3b8">
+          <text x={x(0)} y={H - 8} textAnchor={n === 1 ? 'middle' : 'start'} fontSize="11" style={{ fill: 'rgb(var(--neutral-500))' }}>
             {shortDate(points[0].created_at)}
           </text>
           {n > 1 && (
-            <text x={x(n - 1)} y={H - 8} textAnchor="end" fontSize="11" fill="#94a3b8">
+            <text x={x(n - 1)} y={H - 8} textAnchor="end" fontSize="11" style={{ fill: 'rgb(var(--neutral-500))' }}>
               {shortDate(last.created_at)}
             </text>
           )}
@@ -250,7 +271,7 @@ function ProgressChart({ points }) {
       )}
       <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-indigo-600" /> Gemini chấm
+          <span className="h-2.5 w-2.5 rounded-full bg-brand-600" /> Gemini chấm
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Ước lượng theo luật (không so sánh trực tiếp với Gemini)
@@ -309,7 +330,7 @@ export default function Coach() {
         title="AI Coach"
         subtitle="Chấm bài viết hoặc bài nói tiếng Anh của bạn theo từng tiêu chí."
         lead={
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 text-white shadow-lg shadow-brand-500/30">
             <Sparkles className="h-7 w-7" />
           </div>
         }
@@ -334,7 +355,7 @@ export default function Coach() {
           />
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 hover:text-brand-800 disabled:opacity-50"
             onClick={() => setText(SAMPLE_TEXT)}
             disabled={busy}
           >
@@ -416,7 +437,7 @@ export default function Coach() {
         ) : (
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-3">
-              <StatCard icon={MessageSquareText} tone="indigo" label="Số lượt chấm" value={points.length} />
+              <StatCard icon={MessageSquareText} tone="brand" label="Số lượt chấm" value={points.length} />
               <StatCard icon={TrendingUp} tone="sky" label="Điểm trung bình" value={fmtScore(progress.data.average)} hint="Thang điểm 10" />
               <StatCard icon={Trophy} tone="amber" label="Điểm cao nhất" value={fmtScore(progress.data.best)} hint="Thang điểm 10" />
             </div>
@@ -451,7 +472,7 @@ export default function Coach() {
               return (
                 <details key={h.id} className="group card overflow-hidden !p-0">
                   <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 transition hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
                       {h.kind === 'writing' ? <PenLine className="h-[18px] w-[18px]" /> : <Mic className="h-[18px] w-[18px]" />}
                     </span>
                     <span className="min-w-0 flex-1">
