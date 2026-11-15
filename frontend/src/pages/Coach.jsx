@@ -309,7 +309,7 @@ export default function Coach() {
         title="AI Coach"
         subtitle="Chấm bài viết hoặc bài nói tiếng Anh của bạn theo từng tiêu chí."
         lead={
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30">
             <Sparkles className="h-7 w-7" />
           </div>
         }
