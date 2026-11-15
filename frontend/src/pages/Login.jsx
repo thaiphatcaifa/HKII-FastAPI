@@ -10,14 +10,14 @@ const FEATURES = [
   [Sparkles, 'AI Coach', 'Nhận xét bài viết, bài nói tiếng Anh ngay trong hệ thống.'],
 ]
 
-const GRADIENT = 'bg-gradient-to-br from-[#0b1026] via-[#1a1858] to-[#3b1f8f]'
+const GRADIENT = 'bg-gradient-to-br from-indigo-200 via-violet-200 to-sky-200'
 
 const Logo = ({ className = '' }) => (
   <div className={`flex items-center gap-3 ${className}`}>
-    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 font-display text-xl font-extrabold text-white shadow-lg shadow-indigo-500/40 ring-1 ring-white/25">
+    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 font-display text-xl font-extrabold text-white shadow-lg shadow-indigo-500/30">
       H
     </div>
-    <span className="font-display text-2xl font-extrabold tracking-tight">HKII</span>
+    <span className="font-display text-2xl font-extrabold tracking-tight text-slate-900">HKII</span>
   </div>
 )
 
@@ -28,19 +28,19 @@ function MiniRing({ value }) {
   return (
     <div className="relative h-16 w-16 shrink-0">
       <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90" aria-hidden="true">
-        <circle cx="32" cy="32" r={r} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="7" />
+        <circle cx="32" cy="32" r={r} fill="none" stroke="#e0e7ff" strokeWidth="7" />
         <circle
           cx="32"
           cy="32"
           r={r}
           fill="none"
-          stroke="#6ee7b7"
+          stroke="#10b981"
           strokeWidth="7"
           strokeLinecap="round"
           strokeDasharray={`${c * value} ${c}`}
         />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center font-display text-sm font-extrabold">
+      <span className="absolute inset-0 flex items-center justify-center font-display text-sm font-extrabold text-slate-900">
         {Math.round(value * 100)}%
       </span>
     </div>
@@ -49,11 +49,11 @@ function MiniRing({ value }) {
 
 const MiniBar = ({ label, value, color }) => (
   <div>
-    <div className="mb-1 flex justify-between text-[11px] text-indigo-100">
+    <div className="mb-1 flex justify-between text-[11px] text-slate-600">
       <span>{label}</span>
-      <span className="font-semibold text-white">{value.toFixed(1)}</span>
+      <span className="font-semibold text-slate-900">{value.toFixed(1)}</span>
     </div>
-    <div className="h-1.5 overflow-hidden rounded-full bg-white/20">
+    <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
       <div className={`h-full rounded-full ${color}`} style={{ width: `${value * 10}%` }} />
     </div>
   </div>
@@ -63,45 +63,45 @@ const MiniBar = ({ label, value, color }) => (
 function Showcase() {
   return (
     <div className="relative mt-8 hidden h-[19rem] w-full max-w-lg [@media(min-height:860px)]:block" aria-hidden="true">
-      <div className="glass absolute left-0 top-0 w-60 animate-float rounded-2xl p-4 shadow-xl shadow-black/20">
+      <div className="glass absolute left-0 top-0 w-60 animate-float rounded-2xl p-4 shadow-xl shadow-indigo-900/10">
         <div className="flex items-center gap-4">
           <MiniRing value={0.92} />
           <div>
-            <div className="text-xs text-indigo-100">Chuyên cần tháng này</div>
-            <div className="font-display text-lg font-bold">23/25 buổi</div>
+            <div className="text-xs text-slate-600">Chuyên cần tháng này</div>
+            <div className="font-display text-lg font-bold text-slate-900">23/25 buổi</div>
           </div>
         </div>
       </div>
 
       <div
-        className="glass absolute right-0 top-8 w-56 animate-float-slow rounded-2xl p-4 shadow-xl shadow-black/20"
+        className="glass absolute right-0 top-8 w-56 animate-float-slow rounded-2xl p-4 shadow-xl shadow-indigo-900/10"
         style={{ animationDelay: '-3s' }}
       >
-        <div className="text-xs text-indigo-100">Học phí đã thu</div>
-        <div className="mt-1 font-display text-xl font-extrabold">13.600.000 ₫</div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/20">
-          <div className="h-full w-[68%] rounded-full bg-gradient-to-r from-emerald-300 to-teal-300" />
+        <div className="text-xs text-slate-600">Học phí đã thu</div>
+        <div className="mt-1 font-display text-xl font-extrabold text-slate-900">13.600.000 ₫</div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+          <div className="h-full w-[68%] rounded-full bg-gradient-to-r from-emerald-400 to-teal-400" />
         </div>
-        <div className="mt-1.5 text-[11px] text-indigo-100">68% tổng học phí</div>
+        <div className="mt-1.5 text-[11px] text-slate-600">68% tổng học phí</div>
       </div>
 
       <div
-        className="glass absolute bottom-0 left-12 w-72 animate-float rounded-2xl p-4 shadow-xl shadow-black/20"
+        className="glass absolute bottom-0 left-12 w-72 animate-float rounded-2xl p-4 shadow-xl shadow-indigo-900/10"
         style={{ animationDelay: '-5s' }}
       >
         <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Sparkles className="h-4 w-4 text-amber-200" />
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <Sparkles className="h-4 w-4 text-indigo-600" />
             AI Coach
           </div>
-          <div className="font-display text-xl font-extrabold">
-            8.0<span className="text-xs font-medium text-indigo-100"> / 10</span>
+          <div className="font-display text-xl font-extrabold text-slate-900">
+            8.0<span className="text-xs font-medium text-slate-600"> / 10</span>
           </div>
         </div>
         <div className="space-y-2.5">
-          <MiniBar label="Từ vựng" value={8.5} color="bg-emerald-300" />
-          <MiniBar label="Mạch lạc" value={7.5} color="bg-amber-300" />
-          <MiniBar label="Triển khai ý" value={8} color="bg-sky-300" />
+          <MiniBar label="Từ vựng" value={8.5} color="bg-emerald-500" />
+          <MiniBar label="Mạch lạc" value={7.5} color="bg-amber-400" />
+          <MiniBar label="Triển khai ý" value={8} color="bg-sky-500" />
         </div>
       </div>
     </div>
@@ -139,11 +139,11 @@ export default function Login() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.08fr_1fr]">
-      <div className={`relative hidden overflow-hidden p-10 text-white lg:flex lg:flex-col lg:justify-between lg:gap-10 xl:p-12 ${GRADIENT}`}>
-        <div className="pointer-events-none absolute -left-24 top-10 h-96 w-96 rounded-full bg-indigo-500/30 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-28 right-0 h-96 w-96 rounded-full bg-fuchsia-500/25 blur-3xl" aria-hidden="true" />
+      <div className={`relative hidden overflow-hidden p-10 text-slate-900 lg:flex lg:flex-col lg:justify-between lg:gap-10 xl:p-12 ${GRADIENT}`}>
+        <div className="pointer-events-none absolute -left-24 top-10 h-96 w-96 rounded-full bg-white/60 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-28 right-0 h-96 w-96 rounded-full bg-pink-200/70 blur-3xl" aria-hidden="true" />
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:48px_48px] [-webkit-mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]"
+          className="pointer-events-none absolute inset-0 opacity-[0.22] [background-image:linear-gradient(#6366f1_1px,transparent_1px),linear-gradient(90deg,#6366f1_1px,transparent_1px)] [background-size:48px_48px] [-webkit-mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]"
           aria-hidden="true"
         />
 
@@ -156,12 +156,12 @@ export default function Login() {
           <ul className="mt-8 space-y-4">
             {FEATURES.map(([Icon, title, desc]) => (
               <li key={title} className="flex gap-4">
-                <div className="glass flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+                <div className="glass flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-indigo-600">
                   <Icon className="h-5 w-5" />
                 </div>
                 <div>
                   <div className="font-display font-bold">{title}</div>
-                  <div className="text-sm text-indigo-100">{desc}</div>
+                  <div className="text-sm text-slate-700">{desc}</div>
                 </div>
               </li>
             ))}
@@ -169,12 +169,12 @@ export default function Login() {
           <Showcase />
         </div>
 
-        <div className="relative text-sm text-indigo-200">FastAPI · PostgreSQL · Docker</div>
+        <div className="relative text-sm text-slate-600">FastAPI · PostgreSQL · Docker</div>
       </div>
 
       <div className="relative flex flex-col overflow-hidden">
-        <div className={`relative px-6 pb-12 pt-8 text-white lg:hidden ${GRADIENT}`}>
-          <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-indigo-500/30 blur-3xl" aria-hidden="true" />
+        <div className={`relative px-6 pb-12 pt-8 text-slate-900 lg:hidden ${GRADIENT}`}>
+          <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-white/60 blur-3xl" aria-hidden="true" />
           <Logo className="relative" />
           <p className="relative mt-4 max-w-xs font-display text-xl font-bold leading-snug">Quản lý trung tâm gọn gàng, rõ ràng.</p>
         </div>
@@ -182,15 +182,15 @@ export default function Login() {
         <div className="pointer-events-none absolute -right-24 top-1/4 hidden h-80 w-80 rounded-full bg-indigo-200/40 blur-3xl lg:block" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-24 -left-16 hidden h-72 w-72 rounded-full bg-violet-200/40 blur-3xl lg:block" aria-hidden="true" />
 
-        <div className="relative -mt-5 flex flex-1 items-center justify-center rounded-t-3xl bg-[#f4f5fb] p-6 lg:mt-0 lg:rounded-none lg:bg-transparent">
+        <div className="relative -mt-5 flex flex-1 items-center justify-center rounded-t-3xl bg-[#f7f8ff] p-6 lg:mt-0 lg:rounded-none lg:bg-transparent">
           <form
             onSubmit={submit}
-            className="w-full max-w-sm space-y-5 lg:rounded-3xl lg:bg-white/80 lg:p-8 lg:shadow-xl lg:shadow-indigo-900/10 lg:ring-1 lg:ring-slate-200/70 lg:backdrop-blur"
+            className="w-full max-w-sm space-y-5 lg:rounded-3xl lg:bg-white/85 lg:p-8 lg:shadow-xl lg:shadow-indigo-900/10 lg:ring-1 lg:ring-slate-200/70 lg:backdrop-blur"
           >
             <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-600">Chào mừng trở lại</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-700">Chào mừng trở lại</div>
               <h1 className="font-display text-[28px] font-extrabold tracking-tight text-slate-900">Đăng nhập</h1>
-              <p className="mt-1 text-sm text-slate-500">Nhập tài khoản do trung tâm cấp để tiếp tục.</p>
+              <p className="mt-1 text-sm text-slate-600">Nhập tài khoản do trung tâm cấp để tiếp tục.</p>
             </div>
             <ErrorBox message={error} />
             <Field label="Tên đăng nhập">
