@@ -42,7 +42,7 @@ export default function Tabs({ tabs, value, onChange, label, idPrefix = 'tab' })
               tabIndex={on ? 0 : -1}
               onClick={() => onChange(key)}
               className={`inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
-                on ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                on ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {Icon && <Icon className="h-4 w-4" />}
@@ -50,7 +50,7 @@ export default function Tabs({ tabs, value, onChange, label, idPrefix = 'tab' })
               {count !== undefined && (
                 <span
                   className={`rounded-full px-1.5 text-xs font-bold tabular-nums ${
-                    on ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-300/60 text-slate-600'
+                    on ? 'bg-brand-50 text-brand-700' : 'bg-slate-300/60 text-slate-600'
                   }`}
                 >
                   {count}

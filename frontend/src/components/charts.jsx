@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ProgressBar, fmtDate } from './ui'
 
 // Các biểu đồ vẽ bằng SVG thuần, không cần thêm thư viện.
@@ -25,7 +25,7 @@ export function Donut({ segments, size = 176, thickness = 20, label, children })
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} role="img" aria-label={label} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eceef6" strokeWidth={thickness} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={thickness} style={{ stroke: 'rgb(var(--neutral-100))' }} />
         {total > 0 &&
           visible.map((s) => {
             const len = (s.value / total) * c
@@ -39,11 +39,10 @@ export function Donut({ segments, size = 176, thickness = 20, label, children })
                 cy={size / 2}
                 r={r}
                 fill="none"
-                stroke={s.color}
                 strokeWidth={thickness}
                 strokeDasharray={`${dash} ${c - dash}`}
                 strokeDashoffset={-start}
-                style={{ transition: 'stroke-dasharray 1000ms cubic-bezier(0.2, 0.7, 0.2, 1)' }}
+                style={{ stroke: s.color, transition: 'stroke-dasharray 1000ms cubic-bezier(0.2, 0.7, 0.2, 1)' }}
               />
             )
           })}
@@ -88,34 +87,6 @@ export function BarList({ items }) {
         </li>
       ))}
     </ul>
-  )
-}
-
-// Đường xu hướng nhỏ gọn. values: mảng số theo thời gian (cũ đến mới), cần ít nhất 2 giá trị.
-export function Sparkline({ values, color = '#6366f1', width = 140, height = 44, min, max }) {
-  const gradient = useId().replace(/:/g, '')
-  if (!values || values.length < 2) return null
-  const pad = 4
-  const lo = min ?? Math.min(...values)
-  const hi = max ?? Math.max(...values)
-  const span = hi - lo || 1
-  const x = (i) => pad + (i * (width - pad * 2)) / (values.length - 1)
-  const y = (v) => height - pad - ((v - lo) / span) * (height - pad * 2)
-  const line = values.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ')
-  const area = `${line} L${x(values.length - 1).toFixed(1)} ${height} L${x(0).toFixed(1)} ${height} Z`
-  const last = values.length - 1
-  return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Xu hướng gần đây">
-      <defs>
-        <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#${gradient})`} />
-      <path d={line} fill="none" stroke={color} strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={x(last)} cy={y(values[last])} r="3.5" fill="#fff" stroke={color} strokeWidth="2" />
-    </svg>
   )
 }
 

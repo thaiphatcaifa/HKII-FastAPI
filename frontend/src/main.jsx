@@ -8,6 +8,9 @@ import { AuthProvider } from './auth'
 import ErrorBoundary from './components/ErrorBoundary'
 import { UiProvider } from './components/feedback'
 import './index.css'
+import { applyTheme, getTheme } from './theme'
+
+applyTheme(getTheme())
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

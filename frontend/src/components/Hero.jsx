@@ -19,7 +19,7 @@ export default function Hero({ eyebrow, title, subtitle, chips = [], action, doc
             compact ? 'px-3 py-1 text-xs sm:text-sm' : 'px-3.5 py-1.5 text-sm'
           }`}
         >
-          <Icon className="h-4 w-4 text-indigo-600" />
+          <Icon className="h-4 w-4 text-brand-700" />
           {text}
         </span>
       ))}
@@ -29,14 +29,14 @@ export default function Hero({ eyebrow, title, subtitle, chips = [], action, doc
 
   return (
     <section
-      className={`relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-200 via-violet-200 to-sky-200 text-slate-900 shadow-[0_18px_44px_-22px_rgb(99_102_241/0.5)] ring-1 ring-inset ring-indigo-200/80 ${
+      className={`relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-100 via-accent-100 to-brand-50 text-slate-900 shadow-[0_18px_44px_-22px_rgb(var(--brand-600)/0.4)] ring-1 ring-inset ring-brand-200/80 ${
         compact ? 'p-5 sm:p-6' : 'p-6 sm:p-8'
       }`}
     >
       <div className="pointer-events-none absolute -right-16 -top-28 h-80 w-80 rounded-full bg-white/60 blur-2xl" aria-hidden="true" />
-      <div className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-pink-200/70 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-accent-200/70 blur-3xl" aria-hidden="true" />
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.3] [background-image:radial-gradient(circle,#818cf8_1px,transparent_1px)] [background-size:22px_22px] [-webkit-mask-image:linear-gradient(to_left,black,transparent_65%)] [mask-image:linear-gradient(to_left,black,transparent_65%)]"
+        className="pointer-events-none absolute inset-0 opacity-[0.3] [background-image:radial-gradient(circle,rgb(var(--brand-400))_1px,transparent_1px)] [background-size:22px_22px] [-webkit-mask-image:linear-gradient(to_left,black,transparent_65%)] [mask-image:linear-gradient(to_left,black,transparent_65%)]"
         aria-hidden="true"
       />
       {!compact && (
@@ -51,7 +51,7 @@ export default function Hero({ eyebrow, title, subtitle, chips = [], action, doc
         {back && (
           <Link
             to={back.to}
-            className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-indigo-700 transition hover:text-indigo-900"
+            className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-brand-700 transition hover:text-brand-900"
           >
             <ChevronLeft className="h-4 w-4" />
             {back.label}
@@ -61,7 +61,7 @@ export default function Hero({ eyebrow, title, subtitle, chips = [], action, doc
           <div className="flex min-w-0 items-center gap-4">
             {lead}
             <div className="min-w-0 max-w-2xl">
-              {eyebrow && <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-700">{eyebrow}</div>}
+              {eyebrow && <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-brand-700">{eyebrow}</div>}
               <h1
                 className={`text-balance font-display font-extrabold leading-tight tracking-tight text-slate-900 ${
                   compact ? 'text-2xl sm:text-3xl' : 'text-[28px] sm:text-4xl'
@@ -84,7 +84,7 @@ export function HeroLink({ to, children }) {
   return (
     <Link
       to={to}
-      className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 transition hover:bg-indigo-700"
+      className="inline-flex items-center gap-2 rounded-full bg-brand-700 px-4 py-1.5 text-sm font-semibold text-white shadow-md shadow-brand-500/30 transition hover:bg-brand-800"
     >
       {children}
       <ArrowRight className="h-4 w-4" />

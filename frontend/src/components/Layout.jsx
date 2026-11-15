@@ -84,7 +84,7 @@ export default function Layout() {
     <div className="min-h-screen md:flex">
       <a
         href="#main"
-        className="sr-only z-50 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-indigo-700 shadow-lg focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        className="sr-only z-50 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-lg focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
       >
         Bỏ qua điều hướng
       </a>
@@ -104,13 +104,13 @@ export default function Layout() {
         }`}
       >
         {/* Nền trắng pha chút chàm nhạt ở dưới, kèm hai quầng màu rất mờ */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white via-white to-indigo-50/80" aria-hidden="true" />
-        <div className="pointer-events-none absolute -left-20 -top-16 h-64 w-64 rounded-full bg-indigo-200/40 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-violet-200/40 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white via-white to-brand-50/80" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-20 -top-16 h-64 w-64 rounded-full bg-brand-200/40 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-accent-200/40 blur-3xl" aria-hidden="true" />
 
         <div className="relative flex items-center justify-between gap-3 px-5 py-5 md:py-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 font-display text-lg font-extrabold text-white shadow-lg shadow-indigo-500/30">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 font-display text-lg font-extrabold text-white shadow-lg shadow-brand-500/30">
               H
             </div>
             <div className="leading-tight">
@@ -140,16 +140,16 @@ export default function Layout() {
                   to={to}
                   end={to === '/'}
                   className={({ isActive }) =>
-                    `relative flex items-center gap-3 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-medium transition before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-gradient-to-b before:from-indigo-500 before:to-violet-500 before:transition-opacity ${
+                    `relative flex items-center gap-3 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-medium transition before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-gradient-to-b before:from-brand-500 before:to-accent-500 before:transition-opacity ${
                       isActive
-                        ? 'bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 shadow-sm ring-1 ring-inset ring-indigo-100 before:opacity-100'
+                        ? 'bg-gradient-to-r from-brand-50 to-accent-50 text-brand-700 shadow-sm ring-1 ring-inset ring-brand-100 before:opacity-100'
                         : 'text-slate-600 before:opacity-0 hover:bg-slate-100/80 hover:text-slate-900'
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      <Icon className={`h-[18px] w-[18px] ${isActive ? 'text-indigo-600' : 'text-slate-500'}`} />
+                      <Icon className={`h-[18px] w-[18px] ${isActive ? 'text-brand-700' : 'text-slate-500'}`} />
                       {label}
                     </>
                   )}
@@ -163,16 +163,16 @@ export default function Layout() {
           <div className="relative px-3 pb-3">
             <Link
               to="/coach"
-              className="group relative block overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50 via-violet-50 to-pink-50 p-4 shadow-sm ring-1 ring-inset ring-indigo-100 transition hover:shadow-md"
+              className="group relative block overflow-hidden rounded-2xl bg-gradient-to-br from-brand-50 via-accent-50 to-brand-50 p-4 shadow-sm ring-1 ring-inset ring-brand-100 transition hover:shadow-md"
             >
-              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-indigo-200/50" aria-hidden="true" />
-              <div className="pointer-events-none absolute -bottom-8 right-6 h-16 w-16 rounded-full bg-pink-200/50" aria-hidden="true" />
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30">
+              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-brand-200/50" aria-hidden="true" />
+              <div className="pointer-events-none absolute -bottom-8 right-6 h-16 w-16 rounded-full bg-accent-200/50" aria-hidden="true" />
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 text-white shadow-md shadow-brand-500/30">
                 <Sparkles className="h-[18px] w-[18px]" />
               </div>
               <div className="relative mt-3 font-display text-sm font-bold text-slate-900">Luyện cùng AI Coach</div>
               <div className="relative mt-0.5 text-xs leading-snug text-slate-600">Chấm bài viết, bài nói theo từng tiêu chí.</div>
-              <ArrowRight className="absolute bottom-4 right-4 h-4 w-4 text-indigo-600 transition group-hover:translate-x-0.5" />
+              <ArrowRight className="absolute bottom-4 right-4 h-4 w-4 text-brand-700 transition group-hover:translate-x-0.5" />
             </Link>
           </div>
         )}
@@ -194,7 +194,7 @@ export default function Layout() {
           </button>
           <span className="font-display text-base font-extrabold tracking-tight text-slate-900 md:hidden">HKII</span>
           <div className="hidden items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200/70 md:flex">
-            <CalendarDays className="h-4 w-4 text-indigo-500" />
+            <CalendarDays className="h-4 w-4 text-brand-600" />
             {TODAY.format(new Date())}
           </div>
 
@@ -203,7 +203,7 @@ export default function Layout() {
               <Avatar name={user.full_name} />
               <div className="hidden text-left leading-tight sm:block">
                 <div className="text-sm font-semibold text-slate-900">{user.full_name}</div>
-                <div className="text-xs font-medium text-indigo-600">{ROLE_LABEL[user.role]}</div>
+                <div className="text-xs font-medium text-brand-700">{ROLE_LABEL[user.role]}</div>
               </div>
             </div>
             <button className="btn-ghost btn-sm" onClick={logout} aria-label="Đăng xuất">

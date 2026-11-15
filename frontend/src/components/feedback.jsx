@@ -98,7 +98,7 @@ function ConfirmDialog({ options, onAnswer }) {
         <div className="flex gap-4">
           <div
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-              danger ? 'bg-rose-50 text-rose-600' : 'bg-indigo-50 text-indigo-600'
+              danger ? 'bg-rose-50 text-rose-600' : 'bg-brand-50 text-brand-700'
             }`}
           >
             {danger ? <TriangleAlert className="h-5 w-5" /> : <CircleHelp className="h-5 w-5" />}

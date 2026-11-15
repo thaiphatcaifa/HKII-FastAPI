@@ -98,7 +98,7 @@ export function PageTitle({ title, subtitle, back, children }) {
       {back && (
         <Link
           to={back.to}
-          className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-indigo-600"
+          className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-brand-700"
         >
           <ChevronLeft className="h-4 w-4" />
           {back.label}
@@ -130,7 +130,7 @@ const TONES = {
   amber: 'bg-amber-50 text-amber-700 ring-amber-200',
   red: 'bg-rose-50 text-rose-700 ring-rose-200',
   blue: 'bg-sky-50 text-sky-700 ring-sky-200',
-  indigo: 'bg-indigo-50 text-indigo-700 ring-indigo-200',
+  brand: 'bg-brand-50 text-brand-700 ring-brand-200',
   gray: 'bg-slate-100 text-slate-600 ring-slate-200',
 }
 
@@ -162,9 +162,9 @@ export function EmptyState({ icon: Icon = Inbox, title, children }) {
   return (
     <div className="card flex flex-col items-center py-14 text-center">
       <div className="relative mb-5 flex h-24 w-24 items-center justify-center" aria-hidden="true">
-        <span className="absolute inset-0 rounded-full bg-indigo-50" />
-        <span className="absolute inset-3 rounded-full bg-indigo-100/70" />
-        <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-indigo-500 shadow-md ring-1 ring-indigo-100">
+        <span className="absolute inset-0 rounded-full bg-brand-50" />
+        <span className="absolute inset-3 rounded-full bg-brand-100/70" />
+        <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-brand-600 shadow-md ring-1 ring-brand-100">
           <Icon className="h-7 w-7" />
         </span>
       </div>
@@ -205,7 +205,7 @@ export function AnimatedNumber({ value, format = (n) => String(Math.round(n)), d
 
 // Biểu tượng nền chuyển màu kèm quầng sáng cùng tông
 const STAT_TONES = {
-  indigo: { badge: 'from-indigo-500 to-violet-500 shadow-indigo-500/30', wash: 'from-indigo-500 to-violet-500' },
+  brand: { badge: 'from-brand-500 to-accent-500 shadow-brand-500/30', wash: 'from-brand-500 to-accent-500' },
   emerald: { badge: 'from-emerald-500 to-teal-500 shadow-emerald-500/30', wash: 'from-emerald-500 to-teal-500' },
   amber: { badge: 'from-amber-400 to-orange-500 shadow-amber-500/30', wash: 'from-amber-400 to-orange-500' },
   rose: { badge: 'from-rose-500 to-pink-500 shadow-rose-500/30', wash: 'from-rose-500 to-pink-500' },
@@ -213,7 +213,7 @@ const STAT_TONES = {
 }
 
 // Số liệu lớn kèm biểu tượng. Truyền value là số thì tự chạy hiệu ứng đếm; với số tiền thì truyền amount và format.
-export function StatCard({ icon: Icon, tone = 'indigo', label, value, amount, format, hint }) {
+export function StatCard({ icon: Icon, tone = 'brand', label, value, amount, format, hint }) {
   const t = STAT_TONES[tone]
   const counted = typeof amount === 'number' ? amount : typeof value === 'number' ? value : null
   return (
@@ -238,8 +238,8 @@ export function StatCard({ icon: Icon, tone = 'indigo', label, value, amount, fo
   )
 }
 
-// Vòng tròn phần trăm (value từ 0 đến 1)
-export function Ring({ value, color = '#4f46e5', label, caption, display, compact = false }) {
+// Vòng tròn phần trăm (value từ 0 đến 1). color là màu CSS bất kỳ; mặc định theo màu chủ đạo của bảng màu.
+export function Ring({ value, color = 'rgb(var(--brand-600))', label, caption, display, compact = false }) {
   const r = 44
   const c = 2 * Math.PI * r
   const v = value === null || value === undefined ? 0 : Math.max(0, Math.min(1, value))
@@ -251,17 +251,20 @@ export function Ring({ value, color = '#4f46e5', label, caption, display, compac
         role="img"
         aria-label={`${label}: ${Math.round(v * 100)}%`}
       >
-        <circle cx="50" cy="50" r={r} fill="none" stroke="#eceef6" strokeWidth="10" />
+        <circle cx="50" cy="50" r={r} fill="none" strokeWidth="10" style={{ stroke: 'rgb(var(--neutral-100))' }} />
         <circle
           cx="50"
           cy="50"
           r={r}
           fill="none"
-          stroke={color}
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={`${c * v} ${c}`}
-          style={{ transition: 'stroke-dasharray 800ms cubic-bezier(0.2, 0.7, 0.2, 1)', filter: `drop-shadow(0 2px 4px ${color}55)` }}
+          style={{
+            stroke: color,
+            transition: 'stroke-dasharray 800ms cubic-bezier(0.2, 0.7, 0.2, 1)',
+            filter: `drop-shadow(0 2px 4px color-mix(in srgb, ${color} 35%, transparent))`,
+          }}
         />
       </svg>
       <div>
@@ -276,13 +279,13 @@ export function Ring({ value, color = '#4f46e5', label, caption, display, compac
 }
 
 const AVATAR_COLORS = [
-  'from-indigo-500 to-violet-500',
+  'from-brand-500 to-accent-500',
   'from-sky-500 to-cyan-500',
   'from-emerald-500 to-teal-500',
   'from-amber-500 to-orange-500',
   'from-rose-500 to-pink-500',
-  'from-fuchsia-500 to-purple-500',
-  'from-blue-500 to-indigo-500',
+  'from-lime-500 to-green-500',
+  'from-blue-500 to-brand-500',
   'from-teal-500 to-sky-500',
 ]
 
@@ -304,7 +307,7 @@ export function Avatar({ name, size = 'md' }) {
 }
 
 const CLASS_COLORS = [
-  'from-indigo-500 to-violet-500',
+  'from-brand-500 to-accent-500',
   'from-sky-500 to-cyan-500',
   'from-emerald-500 to-teal-500',
   'from-amber-500 to-orange-500',
@@ -368,7 +371,7 @@ export function Segmented({ options, value, onChange, label }) {
             aria-pressed={on}
             onClick={() => onChange(o.value)}
             className={`inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
-              on ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              on ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             {Icon && <Icon className="h-4 w-4" />}
@@ -376,7 +379,7 @@ export function Segmented({ options, value, onChange, label }) {
             {o.count !== undefined && (
               <span
                 className={`rounded-full px-1.5 text-xs font-bold tabular-nums ${
-                  on ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-300/60 text-slate-600'
+                  on ? 'bg-brand-50 text-brand-700' : 'bg-slate-300/60 text-slate-600'
                 }`}
               >
                 {o.count}
@@ -390,7 +393,7 @@ export function Segmented({ options, value, onChange, label }) {
 }
 
 const BAR_TONES = {
-  indigo: 'bg-indigo-500',
+  brand: 'bg-brand-500',
   green: 'bg-emerald-500',
   amber: 'bg-amber-500',
   red: 'bg-rose-500',
@@ -398,7 +401,7 @@ const BAR_TONES = {
 }
 
 // Thanh tiến độ (value từ 0 đến 1)
-export function ProgressBar({ value, tone = 'indigo', label, className = '' }) {
+export function ProgressBar({ value, tone = 'brand', label, className = '' }) {
   const pct = Math.round(Math.max(0, Math.min(1, value ?? 0)) * 100)
   return (
     <div
