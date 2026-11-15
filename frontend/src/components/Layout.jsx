@@ -99,28 +99,28 @@ export default function Layout() {
 
       <aside
         id="sidebar"
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-hidden bg-slate-950 text-slate-300 transition-[transform,visibility] duration-200 md:visible md:sticky md:top-0 md:h-screen md:shrink-0 md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-hidden border-r border-slate-200/70 bg-white text-slate-600 transition-[transform,visibility] duration-200 md:visible md:sticky md:top-0 md:h-screen md:shrink-0 md:translate-x-0 ${
           open ? 'visible translate-x-0 shadow-2xl' : 'invisible -translate-x-full'
         }`}
       >
-        {/* Nền chuyển màu và hai quầng sáng mờ */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0b1026] via-[#10173a] to-[#1a1858]" aria-hidden="true" />
-        <div className="pointer-events-none absolute -left-24 -top-20 h-72 w-72 rounded-full bg-indigo-500/25 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-28 -right-24 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" aria-hidden="true" />
+        {/* Nền trắng pha chút chàm nhạt ở dưới, kèm hai quầng màu rất mờ */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white via-white to-indigo-50/80" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-20 -top-16 h-64 w-64 rounded-full bg-indigo-200/40 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-violet-200/40 blur-3xl" aria-hidden="true" />
 
         <div className="relative flex items-center justify-between gap-3 px-5 py-5 md:py-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 font-display text-lg font-extrabold text-white shadow-lg shadow-indigo-500/40 ring-1 ring-white/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 font-display text-lg font-extrabold text-white shadow-lg shadow-indigo-500/30">
               H
             </div>
             <div className="leading-tight">
-              <div className="font-display text-lg font-extrabold tracking-tight text-white">HKII</div>
-              <div className="text-xs text-slate-400">Quản lý trung tâm</div>
+              <div className="font-display text-lg font-extrabold tracking-tight text-slate-900">HKII</div>
+              <div className="text-xs text-slate-500">Quản lý trung tâm</div>
             </div>
           </div>
           <button
             type="button"
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white md:hidden"
+            className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 md:hidden"
             aria-label="Đóng menu"
             onClick={() => setOpen(false)}
           >
@@ -132,7 +132,7 @@ export default function Layout() {
           {groups.map(([title, items]) => (
             <div key={title || 'main'} className="space-y-1">
               {title && (
-                <div className="px-3.5 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{title}</div>
+                <div className="px-3.5 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{title}</div>
               )}
               {items.map(([to, label, Icon]) => (
                 <NavLink
@@ -140,16 +140,16 @@ export default function Layout() {
                   to={to}
                   end={to === '/'}
                   className={({ isActive }) =>
-                    `relative flex items-center gap-3 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-medium transition before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-gradient-to-b before:from-indigo-300 before:to-violet-400 before:transition-opacity ${
+                    `relative flex items-center gap-3 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-medium transition before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-gradient-to-b before:from-indigo-500 before:to-violet-500 before:transition-opacity ${
                       isActive
-                        ? 'bg-white/10 text-white shadow-inner ring-1 ring-inset ring-white/10 before:opacity-100'
-                        : 'text-slate-400 before:opacity-0 hover:bg-white/5 hover:text-white'
+                        ? 'bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 shadow-sm ring-1 ring-inset ring-indigo-100 before:opacity-100'
+                        : 'text-slate-600 before:opacity-0 hover:bg-slate-100/80 hover:text-slate-900'
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      <Icon className={`h-[18px] w-[18px] ${isActive ? 'text-indigo-300' : ''}`} />
+                      <Icon className={`h-[18px] w-[18px] ${isActive ? 'text-indigo-600' : 'text-slate-500'}`} />
                       {label}
                     </>
                   )}
@@ -163,19 +163,21 @@ export default function Layout() {
           <div className="relative px-3 pb-3">
             <Link
               to="/coach"
-              className="group relative block overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 p-4 text-white shadow-lg shadow-indigo-950/50 ring-1 ring-white/20 transition hover:brightness-110"
+              className="group relative block overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50 via-violet-50 to-pink-50 p-4 shadow-sm ring-1 ring-inset ring-indigo-100 transition hover:shadow-md"
             >
-              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/15" aria-hidden="true" />
-              <div className="pointer-events-none absolute -bottom-8 right-6 h-16 w-16 rounded-full bg-white/10" aria-hidden="true" />
-              <Sparkles className="relative h-5 w-5" />
-              <div className="relative mt-2 font-display text-sm font-bold">Luyện cùng AI Coach</div>
-              <div className="relative mt-0.5 text-xs leading-snug text-indigo-100">Chấm bài viết, bài nói theo từng tiêu chí.</div>
-              <ArrowRight className="absolute bottom-4 right-4 h-4 w-4 transition group-hover:translate-x-0.5" />
+              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-indigo-200/50" aria-hidden="true" />
+              <div className="pointer-events-none absolute -bottom-8 right-6 h-16 w-16 rounded-full bg-pink-200/50" aria-hidden="true" />
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30">
+                <Sparkles className="h-[18px] w-[18px]" />
+              </div>
+              <div className="relative mt-3 font-display text-sm font-bold text-slate-900">Luyện cùng AI Coach</div>
+              <div className="relative mt-0.5 text-xs leading-snug text-slate-600">Chấm bài viết, bài nói theo từng tiêu chí.</div>
+              <ArrowRight className="absolute bottom-4 right-4 h-4 w-4 text-indigo-600 transition group-hover:translate-x-0.5" />
             </Link>
           </div>
         )}
 
-        <div className="relative border-t border-white/5 px-5 py-4 text-xs text-slate-400">FastAPI · PostgreSQL · Docker</div>
+        <div className="relative border-t border-slate-200/70 px-5 py-4 text-xs text-slate-500">FastAPI · PostgreSQL · Docker</div>
       </aside>
 
       <div className="min-w-0 flex-1">
