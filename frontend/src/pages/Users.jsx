@@ -20,7 +20,7 @@ import {
 } from '../components/ui'
 
 const EMPTY = { username: '', full_name: '', password: '', role: 'student' }
-const ROLE_TONE = { admin: 'indigo', teacher: 'blue', student: 'green', parent: 'amber' }
+const ROLE_TONE = { admin: 'brand', teacher: 'blue', student: 'green', parent: 'amber' }
 
 const CloseButton = ({ onClick }) => (
   <button
@@ -173,7 +173,7 @@ function ImportCard({ onDone, onCancel }) {
         </div>
       </div>
 
-      <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/60 px-4 py-4 transition hover:border-indigo-400 hover:bg-indigo-50/40 focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100">
+      <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/60 px-4 py-4 transition hover:border-brand-400 hover:bg-brand-50/40 focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-100">
         <FileUp className="h-6 w-6 shrink-0 text-slate-400" />
         <span className="min-w-0 flex-1 text-sm">
           {file ? (

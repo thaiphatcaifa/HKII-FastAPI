@@ -591,7 +591,7 @@ function ReportTab({ classId, code }) {
         />
         <StatCard
           icon={GraduationCap}
-          tone="indigo"
+          tone="brand"
           label="Điểm trung bình"
           value={r.average_score_10 === null ? '—' : fmtScore(r.average_score_10)}
           hint="Thang điểm 10"
@@ -633,7 +633,7 @@ function ReportTab({ classId, code }) {
                     <Metric tone={attendanceTone(s.attendance_rate)}>{percent(s.attendance_rate)}</Metric>
                     <ProgressBar
                       value={s.attendance_rate}
-                      tone={{ green: 'green', amber: 'amber', red: 'red', gray: 'indigo' }[attendanceTone(s.attendance_rate)]}
+                      tone={{ green: 'green', amber: 'amber', red: 'red', gray: 'brand' }[attendanceTone(s.attendance_rate)]}
                       label={`Chuyên cần của ${s.full_name}`}
                     />
                   </div>

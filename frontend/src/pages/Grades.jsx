@@ -66,10 +66,10 @@ export default function Grades() {
                   type="button"
                   aria-pressed={on}
                   onClick={() => setClassId(on ? '' : String(s.class_id))}
-                  className={`card text-left transition hover:border-indigo-300 ${on ? '!border-indigo-400 ring-2 ring-indigo-200' : ''}`}
+                  className={`card text-left transition hover:border-brand-300 ${on ? '!border-brand-400 ring-2 ring-brand-200' : ''}`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-lg bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700">
+                    <span className="rounded-lg bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-700">
                       {classCode(s.class_id)}
                     </span>
                     <span className="text-xs text-slate-500">{s.count} đầu điểm</span>

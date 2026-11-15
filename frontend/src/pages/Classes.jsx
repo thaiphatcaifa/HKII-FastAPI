@@ -161,13 +161,13 @@ export default function Classes() {
             <Link
               key={c.id}
               to={`/classes/${c.id}`}
-              className="card group flex flex-col gap-4 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md"
+              className="card group flex flex-col gap-4 transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
             >
               <div className="flex items-start gap-4">
                 <ClassMark code={c.code} large />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold text-slate-900 group-hover:text-indigo-700">{c.name}</div>
-                  <span className="mt-1 inline-block rounded-lg bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700">
+                  <div className="truncate font-semibold text-slate-900 group-hover:text-brand-800">{c.name}</div>
+                  <span className="mt-1 inline-block rounded-lg bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-700">
                     {c.code}
                   </span>
                 </div>
@@ -184,7 +184,7 @@ export default function Classes() {
                   </div>
                 )}
               </div>
-              <div className="mt-auto flex items-center justify-end gap-1 text-sm font-semibold text-indigo-600">
+              <div className="mt-auto flex items-center justify-end gap-1 text-sm font-semibold text-brand-700">
                 Mở lớp
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </div>

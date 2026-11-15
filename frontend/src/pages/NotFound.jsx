@@ -7,7 +7,7 @@ export default function NotFound() {
     <>
       <PageTitle title="Không tìm thấy trang" />
       <div className="card flex flex-col items-center py-14 text-center">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
           <Compass className="h-7 w-7" />
         </div>
         <h2 className="text-lg font-semibold text-slate-900">Trang bạn tìm không tồn tại</h2>

@@ -80,7 +80,7 @@ function SectionCard({ title, action, children }) {
 }
 
 const SeeAll = ({ to, children }) => (
-  <Link to={to} className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+  <Link to={to} className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:text-brand-800">
     {children}
     <ArrowRight className="h-4 w-4" />
   </Link>
@@ -142,7 +142,7 @@ function AdminHome({ user }) {
   const attendanceAvg = weighted('average_attendance_rate')
   const scoreAvg = weighted('average_score_10')
   const roles = [
-    ['admin', 'indigo'],
+    ['admin', 'brand'],
     ['teacher', 'blue'],
     ['student', 'green'],
     ['parent', 'amber'],
@@ -161,7 +161,7 @@ function AdminHome({ user }) {
       />
 
       <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={School} tone="indigo" label="Lớp học" value={classes.length} />
+        <StatCard icon={School} tone="brand" label="Lớp học" value={classes.length} />
         <StatCard
           icon={Users}
           tone="sky"
@@ -343,12 +343,12 @@ function TeacherHome({ user }) {
           <Link
             key={c.id}
             to={`/classes/${c.id}`}
-            className="card group block transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-card-hover"
+            className="card group block transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card-hover"
           >
             <div className="flex items-center gap-4">
               <ClassMark code={c.code} large />
               <div className="min-w-0">
-                <div className="truncate font-display font-bold text-slate-900 group-hover:text-indigo-700">{c.name}</div>
+                <div className="truncate font-display font-bold text-slate-900 group-hover:text-brand-800">{c.name}</div>
                 <div className="text-xs font-medium text-slate-500">{c.code}</div>
                 <div className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
                   <Clock className="h-3.5 w-3.5" />
@@ -361,7 +361,7 @@ function TeacherHome({ user }) {
                 <div className="mt-4">
                   <ProgressBar
                     value={reports[i].average_attendance_rate}
-                    tone={{ green: 'green', amber: 'amber', red: 'red', gray: 'indigo' }[attendanceTone(reports[i].average_attendance_rate)]}
+                    tone={{ green: 'green', amber: 'amber', red: 'red', gray: 'brand' }[attendanceTone(reports[i].average_attendance_rate)]}
                     label={`Chuyên cần lớp ${c.code}`}
                   />
                 </div>
@@ -502,7 +502,6 @@ function FamilyHome({ user }) {
         <div className="card">
           <Ring
             value={avg === null ? null : avg / 10}
-            color="#4f46e5"
             label="Điểm trung bình"
             display={avg === null ? '—' : avg.toFixed(2)}
             caption={avg === null ? 'Chưa có điểm' : 'Trên thang 10'}

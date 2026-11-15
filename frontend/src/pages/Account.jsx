@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { api } from '../api'
 import { ROLE_LABEL, useAuth } from '../auth'
 import { useToast } from '../components/feedback'
+import ThemePicker from '../components/ThemePicker'
 import { Avatar, ErrorBox, Field, PageTitle, ProgressBar, Spinner } from '../components/ui'
 
 const EMPTY = { old_password: '', new_password: '', confirm: '' }
@@ -66,13 +67,16 @@ export default function Account() {
     <>
       <PageTitle title="Tài khoản" subtitle="Thông tin đăng nhập và đổi mật khẩu." />
       <div className="grid gap-5 md:grid-cols-2">
-        <div className="card flex items-center gap-4 self-start">
-          <Avatar name={user.full_name} size="lg" />
-          <div className="min-w-0">
-            <div className="truncate text-lg font-semibold text-slate-900">{user.full_name}</div>
-            <div className="text-sm text-slate-500">@{user.username}</div>
-            <div className="mt-1 text-sm text-slate-500">{ROLE_LABEL[user.role]}</div>
+        <div className="space-y-5 self-start">
+          <div className="card flex items-center gap-4">
+            <Avatar name={user.full_name} size="lg" />
+            <div className="min-w-0">
+              <div className="truncate text-lg font-semibold text-slate-900">{user.full_name}</div>
+              <div className="text-sm text-slate-500">@{user.username}</div>
+              <div className="mt-1 text-sm text-slate-500">{ROLE_LABEL[user.role]}</div>
+            </div>
           </div>
+          <ThemePicker />
         </div>
 
         <form onSubmit={submit} className="card space-y-4">
