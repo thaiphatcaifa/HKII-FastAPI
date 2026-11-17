@@ -17,13 +17,13 @@ Database + Cloud Functions) bằng **FastAPI**, **PostgreSQL** và **Docker**. P
 | # | Module | Endpoint chính |
 |---|---|---|
 | 1 | Đăng nhập và phân quyền (JWT, 4 vai trò) | `/auth/login`, `/auth/me`, `/users`, `/students` |
-| 2 | Lớp học và học viên | `/classes`, `/classes/{id}/students` |
+| 2 | Lớp học và học viên | `/classes`, `/classes/{id}` (xem, sửa, xóa lớp trống), `/classes/{id}/students` |
 | 3 | Điểm danh và điểm số (+ báo cáo) | `/attendance/batch`, `/attendance/summary/{id}`, `/scores`, `/reports/class/{id}/summary`, `/reports/class/{id}/export.xlsx` |
-| 4 | Học phí | `/tuition`, `/tuition/{id}/pay`, `/tuition/mark-overdue`, `/tuition/summary` |
+| 4 | Học phí | `/tuition`, `/tuition/{id}` (sửa, xóa khoản chưa đóng), `/tuition/{id}/pay`, `/tuition/mark-overdue`, `/tuition/summary` |
 | 5 | AI Coach (chấm theo tiêu chí, sửa lỗi, theo dõi tiến bộ) | `/coach/feedback`, `/coach/history`, `/coach/progress` |
 | + | AI hỗ trợ giáo viên (cảnh báo rủi ro + nhận xét học viên) | `/ai/risk`, `/ai/risk/advice`, `/ai/reviews`, `/ai/reviews/{id}/publish` |
 
-Tổng cộng **49 API** trên 37 đường dẫn (đếm từ OpenAPI `/openapi.json`): users 9, classes 8, ai 8, scores 5, tuition 5, auth 4, attendance 3, coach 3, reports 3, system 1.
+Tổng cộng **52 API** trên 38 đường dẫn (đếm từ OpenAPI `/openapi.json`): users 9, classes 9, ai 8, tuition 7, scores 5, auth 4, attendance 3, coach 3, reports 3, system 1.
 
 Vai trò: `admin`, `teacher`, `student`, `parent`. Quyền được kiểm tra ở `backend/app/deps.py`
 (thay cho `database.rules.json` của Firebase).
@@ -38,7 +38,9 @@ docker compose up --build
 - **Giao diện web: http://localhost:8080** (React + nginx, gọi API qua `/api`)
 - API: http://localhost:8000 · Tài liệu tương tác (Swagger): http://localhost:8000/docs
 - PostgreSQL: `localhost:5433` (đổi bằng `DB_PORT`)
-- Lần chạy đầu tự tạo bảng (Alembic) và dữ liệu mẫu (`SEED_ON_START=true`).
+- Lần chạy đầu tự tạo bảng (Alembic) và dữ liệu mẫu (`SEED_ON_START=true`): đủ 3 mức cảnh báo rủi ro, đủ 3 trạng thái học phí, một nhận xét AI đã công bố của `hv01` để `ph.an` thấy ngay.
+- `api` có healthcheck gọi `/health`; `web` chỉ khởi động khi `api` đã sẵn sàng, nên không còn lỗi 502 lúc mới bật.
+- Chạy trên Kubernetes (minikube): manifest trong `k8s/`, các bước ở [docs/HUONG-DAN-CHAY.md](docs/HUONG-DAN-CHAY.md) mục 1.11.
 - `APP_ENV` (`dev` | `prod`, mặc định `dev`): khi `prod` mà `SECRET_KEY` hoặc `SEED_PASSWORD` còn giá trị mặc định thì API dừng khởi động; khi `dev` chỉ ghi cảnh báo vào log.
 
 Tài khoản mẫu (mật khẩu `SEED_PASSWORD`, mặc định `Hkii@12345`; **đổi trước khi dùng thật**):
@@ -52,12 +54,15 @@ Tài khoản mẫu (mật khẩu `SEED_PASSWORD`, mặc định `Hkii@12345`; **
 
 ## Chạy test
 
-Có **90 test**. Code nằm trong image nên sau khi sửa code hoặc test phải build lại: `docker compose build api`.
+Có **120 test**, độ phủ **98%** (`pytest-cov`). Code nằm trong image nên sau khi sửa code hoặc test phải build lại: `docker compose build api`.
 
 Mặc định test dùng SQLite riêng, không đụng PostgreSQL:
 
 ```bash
 docker compose run --rm --no-deps api python -m pytest -q
+
+# kèm báo cáo độ phủ từng file
+docker compose run --rm --no-deps api python -m pytest -q --cov=app --cov-report=term-missing
 ```
 
 Chạy trên PostgreSQL thật, bằng CSDL riêng `hkii_test` (mỗi test xóa và tạo lại toàn bộ bảng; `conftest.py` từ chối CSDL không có chữ `test` trong tên hoặc trùng `DATABASE_URL`):
@@ -70,7 +75,7 @@ docker compose run --rm --no-deps -e TEST_DATABASE_URL=postgresql+psycopg://hkii
 
 Lệnh trên dùng mật khẩu mặc định khi **không có** file `.env`. Nếu đã chép `.env.example` thành `.env` thì thay `hkii_dev` bằng giá trị `POSTGRES_PASSWORD` trong `.env` (file mẫu là `doi_mat_khau_nay`), và đổi cả `POSTGRES_USER` nếu đã sửa.
 
-**CI:** `.github/workflows/ci.yml` chạy mỗi lần push và pull request: pytest trên SQLite, pytest trên PostgreSQL (service container), `npm ci` và `npm run build`.
+**CI:** `.github/workflows/ci.yml` chạy mỗi lần push và pull request: pytest trên SQLite, pytest trên PostgreSQL (service container), cả hai đều đo độ phủ và báo lỗi nếu dưới 90% (`--cov-fail-under=90`), `npm ci` và `npm run build`.
 
 ## AI Coach
 
@@ -101,12 +106,14 @@ Nguyên tắc: **AI chỉ đề xuất, giáo viên quyết định**; không c�
 ## Cấu trúc
 
 ```
-docker-compose.yml
-.github/workflows/    # ci.yml: test SQLite, test PostgreSQL, build frontend
+docker-compose.yml    # db, api (healthcheck /health), web (chờ api healthy)
+k8s/                  # Kubernetes: ConfigMap, Secret mẫu, PVC + Deployment + Service cho db, api, web
+.github/workflows/    # ci.yml: test SQLite, test PostgreSQL (kèm độ phủ >= 90%), build frontend
 frontend/             # React 19 + Vite + Tailwind, gọi FastAPI (src/api.js)
   Dockerfile  nginx.conf
-  src/pages/          # Login, Dashboard, Classes, ClassDetail, Attendance, Grades, Tuition, Users, Coach
-  src/components/     # ui.jsx, Layout, StudentPicker, AiTabs (tab Cảnh báo / Nhận xét AI, thẻ nhận xét cho phụ huynh)
+  src/pages/          # Login, Dashboard, Classes, ClassDetail, Attendance, Grades, Tuition, Users, Coach, Account, NotFound (404)
+  src/components/     # ui.jsx, Layout, Hero, Tabs, charts, feedback (thông báo + hộp xác nhận), ThemePicker (3 bảng màu),
+                      # ErrorBoundary, StudentPicker, AiTabs (tab Cảnh báo / Nhận xét AI, thẻ nhận xét cho phụ huynh)
 backend/
   Dockerfile  requirements.txt  alembic.ini
   alembic/            # migration
@@ -116,7 +123,9 @@ backend/
     routers/          # ENDPOINTS: chỉ lo HTTP + phân quyền (auth users classes attendance scores tuition reports coach ai)
     crud/             # CRUD: toàn bộ truy vấn ORM/SQL (users classes attendance scores tuition coach ai_notes)
     services/         # report.py (pandas), gemini.py (gọi Gemini + dự phòng), coach.py (chấm bài), insights.py (luật rủi ro), insights_ai.py (AI soạn nháp)
-  tests/              # test_api.py (luồng chính) + test_extra.py (phân trang, PUT, lỗi, logging) + test_ai.py (AI hỗ trợ giáo viên) + test_coach.py (AI Coach) + test_config.py (APP_ENV, bảo vệ CSDL chính)
+  tests/              # test_api.py (luồng chính), test_extra.py (phân trang, PUT, lỗi, logging), test_ai.py (AI hỗ trợ giáo viên),
+                      # test_coach.py (AI Coach), test_config.py (APP_ENV, bảo vệ CSDL chính), test_classes_delete.py (xóa lớp),
+                      # test_tuition_edit.py (sửa, xóa học phí), test_coverage.py (nhánh lỗi, phân quyền, dữ liệu mẫu)
 docs/postman/         # Postman collection + environment để kiểm thử API
 ```
 
@@ -127,6 +136,8 @@ Bốn lớp theo tài liệu môn học: `models.py` (bảng) → `schemas.py` (
 - **Phân trang:** các danh sách (`/users`, `/students`, `/classes`, `/attendance`, `/scores`, `/tuition`) nhận `?skip=0&limit=100`
   (`limit` tối đa 500). Tổng số bản ghi nằm ở header `X-Total-Count`. Giao diện dùng `api.getAll()` để tự lấy đủ các trang.
 - **PUT và PATCH:** `PATCH /classes/{id}` sửa một phần; `PUT /classes/{id}` thay thế toàn bộ (trường tùy chọn không gửi sẽ về rỗng).
+- **Xóa an toàn:** `DELETE /classes/{id}` (admin) chỉ xóa lớp trống; lớp còn học viên, điểm danh, điểm số, học phí hoặc nhận xét AI trả `409` kèm số lượng từng loại.
+  `PATCH /tuition/{id}` và `DELETE /tuition/{id}` (admin) chỉ áp dụng cho khoản chưa đóng; khoản đã đóng trả `409`. Sửa hạn đóng thì trạng thái tự tính lại.
 - **Lỗi:** luôn có dạng `{"detail": ...}`. Lỗi nghiệp vụ là các `AppError` trong `errors.py` (404, 409, 403...);
   lỗi không lường trước trả `500` chung chung, chi tiết chỉ nằm trong log.
 - **Logging:** logger `hkii.*` ghi mỗi request kèm thời gian (cảnh báo nếu chậm hơn `SLOW_REQUEST_MS`, mặc định 500 ms),
@@ -145,14 +156,15 @@ Bốn lớp theo tài liệu môn học: `models.py` (bảng) → `schemas.py` (
 
 ## Giao diện
 
-Giao diện được viết mới, gọn, chỉ phục vụ 5 module trên. Màn hình theo vai trò:
+Giao diện được viết mới, gọn, chỉ phục vụ 5 module trên: thông báo nổi, hộp xác nhận cho thao tác xóa, tab, trang 404, biểu đồ,
+3 bảng màu chọn ở trang **Tài khoản** (Xanh ngọc mặc định, Xanh biển, Ấm áp). Màn hình theo vai trò (ai cũng có trang Tài khoản để đổi mật khẩu và bảng màu):
 
 | Vai trò | Màn hình |
 |---|---|
-| admin | Tổng quan, Lớp học (tạo lớp, ghi danh), Người dùng, Học phí, AI Coach |
+| admin | Tổng quan, Lớp học (tạo, sửa, xóa lớp trống, ghi danh), Người dùng, Học phí (tạo, sửa, xóa khoản chưa đóng, ghi nhận đã đóng), AI Coach |
 | teacher | Lớp của mình: Học viên / Điểm danh / Điểm số / Báo cáo (xuất Excel) / Cảnh báo / Nhận xét AI, AI Coach |
 | student | Tổng quan (kèm nhận xét giáo viên đã công bố), Chuyên cần, Điểm số, Học phí, AI Coach |
-| parent | Như học viên, chọn từng con |
+| parent | Tổng quan, Chuyên cần, Điểm số, Học phí, chọn từng con (không có AI Coach) |
 
 Chạy riêng giao diện để phát triển (cần API ở cổng 8000):
 
@@ -163,4 +175,4 @@ cd frontend && npm install && npm run dev   # http://localhost:5173
 ## Hướng dẫn tiếp theo
 
 - Mở rộng module: chat, thông báo, game, Bonus nếu đề bài yêu cầu.
-- Bổ sung test giao diện (Vitest/Playwright).
+- Bổ sung test giao diện tự động trong CI (Vitest/Playwright).

@@ -35,6 +35,14 @@
     {
       "key": "ai_note_id",
       "value": ""
+    },
+    {
+      "key": "student_id",
+      "value": ""
+    },
+    {
+      "key": "tuition_id",
+      "value": ""
     }
   ],
   "item": [
@@ -147,9 +155,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
-                  "const data = pm.response.json();",
-                  "pm.test(\"Có access_token\", () => pm.expect(data.access_token).to.be.a(\"string\"));",
-                  "pm.collectionVariables.set(\"token\", data.access_token);"
+                  "const body = pm.response.json();",
+                  "pm.test(\"Có access_token\", () => pm.expect(body.access_token).to.be.a(\"string\"));",
+                  "pm.collectionVariables.set(\"token\", body.access_token);"
                 ]
               }
             }
@@ -489,7 +497,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const students = pm.response.json(); if (students.length) pm.collectionVariables.set(\"student_id\", students[0].id);"
                 ]
               }
             }
@@ -839,6 +848,63 @@
               }
             }
           ]
+        },
+        {
+          "name": "Xóa lớp còn dữ liệu → 409",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/classes/{{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "classes",
+                "{{class_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Có lý do\", () => pm.expect(pm.response.json().detail).to.include(\"Không thể xóa lớp\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xóa lớp trống vừa tạo (DELETE) → 204",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/classes/{{new_class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "classes",
+                "{{new_class_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -1107,6 +1173,260 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo khoản học phí (lưu tuition_id)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tuition",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tuition"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": {{student_id}},\n  \"amount\": 1500000,\n  \"due_date\": \"2030-12-31\",\n  \"note\": \"Khoản thử Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"tuition_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sửa khoản chưa đóng (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tuition/{{tuition_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tuition",
+                "{{tuition_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1800000,\n  \"note\": \"Đã điều chỉnh\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Số tiền mới\", () => pm.expect(pm.response.json().amount).to.eql(1800000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xóa khoản chưa đóng (DELETE) → 204",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tuition/{{tuition_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tuition",
+                "{{tuition_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo khoản thứ hai rồi ghi nhận đã đóng",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tuition",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tuition"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": {{student_id}},\n  \"amount\": 1500000,\n  \"due_date\": \"2030-12-31\",\n  \"note\": \"Khoản thử Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"tuition_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ghi nhận đã đóng",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tuition/{{tuition_id}}/pay",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tuition",
+                "{{tuition_id}}",
+                "pay"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sửa khoản ĐÃ đóng → 409",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tuition/{{tuition_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tuition",
+                "{{tuition_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xóa khoản ĐÃ đóng → 409",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tuition/{{tuition_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tuition",
+                "{{tuition_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409\", () => pm.response.to.have.status(409));"
                 ]
               }
             }

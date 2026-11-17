@@ -6,6 +6,8 @@
 > Cập nhật 01/11/2026 theo code ở nhánh `feature/crud-logging-pagination`: giao người phụ trách cho các file thêm sau bản đầu (xử lý lỗi, logging, phân trang, việc chạy nền học phí, nhập CSV, Postman), chia lại test theo đúng file đang có, cân lại việc còn lại.
 >
 > Cập nhật 05/11/2026: điền thành viên và ngày hạn, đánh dấu việc đã xong theo code và lịch sử commit hiện tại. Repo nộp bài chuyển sang `thaiphatcaifa/HKII-FastAPI`.
+>
+> Cập nhật 17/11/2026: La Vĩ Quyền làm lại toàn bộ giao diện từ 14 đến 15/11 (nhánh `feature/cai-thien-giao-dien`, 13 commit, 29 file trong `frontend/`), gộp vào `main` bằng pull request #1 ngày 17/11. Thái Phát chốt code trên nhánh `feature/chot-truoc-nop`: xóa lớp trống, sửa và xóa học phí chưa đóng, độ phủ test 98%, healthcheck Docker, dữ liệu mẫu cho demo, manifest Kubernetes.
 
 ## 1. Thành viên
 
@@ -22,18 +24,19 @@
 | Router và CRUD (`backend/app/`) | `routers/`: `auth`, `users` (kể cả nhập người dùng từ CSV), `classes`, `attendance`, `scores`, `reports`<br>`crud/`: `users`, `classes`, `attendance`, `scores` | `routers/`: `tuition`, `coach`, `ai`<br>`crud/`: `tuition`, `coach`, `ai_notes` |
 | Dịch vụ (`services/`) | `report.py` (pandas, Excel), `stats.py` (công thức chuyên cần dùng chung) | `gemini.py`, `coach.py` (Gemini, bộ nhận xét theo luật), `insights.py` (luật rủi ro), `insights_ai.py` (AI soạn nháp), `tuition_jobs.py` (tự đánh dấu học phí quá hạn, chạy nền) |
 | Khung ứng dụng (`backend/app/`) | `deps.py` (kiểm tra quyền theo vai trò), `security.py` (JWT, băm mật khẩu), `db.py` | `main.py`, `config.py`, `errors.py`, `error_handlers.py` (mã lỗi thống nhất), `logging_config.py`, `pagination.py`, `params.py` |
-| Giao diện (`frontend/src/`) | `pages/`: `Login`, `Account`, `Dashboard`, `Classes`, `ClassDetail`, `Attendance`, `Grades`, `Users`<br>`auth.jsx` (trạng thái đăng nhập) | `pages/`: `Tuition`, `Coach` (điểm tiêu chí, lỗi kèm câu sửa, biểu đồ tiến bộ)<br>`components/AiTabs.jsx` (tab Cảnh báo, Nhận xét AI) |
-| Hạ tầng | Thiết kế CSDL (`models.py`, 9 bảng), Alembic | `docker-compose.yml`, `Dockerfile`, `nginx.conf`, `.env.example` (CI do A làm, xem mục 3) |
+| Giao diện (`frontend/src/`) | `pages/`: `Login`, `Account`, `Dashboard`, `Classes`, `ClassDetail` (kể cả nút Xóa lớp), `Attendance`, `Grades`, `Users`<br>`auth.jsx` (trạng thái đăng nhập) | `pages/`: `Tuition` (kể cả sửa, xóa khoản chưa đóng), `Coach` (điểm tiêu chí, lỗi kèm câu sửa, biểu đồ tiến bộ), `NotFound` (404)<br>`components/AiTabs.jsx` (tab Cảnh báo, Nhận xét AI)<br>Thiết kế giao diện chung (làm lại 14 đến 15/11): `feedback.jsx` (thông báo, hộp xác nhận), `Tabs.jsx`, `Hero.jsx`, `charts.jsx`, `ThemePicker.jsx` + `theme.js` (3 bảng màu), `ErrorBoundary.jsx`, `tailwind.config.js` |
+| Hạ tầng | Thiết kế CSDL (`models.py`, 9 bảng), Alembic, CI kèm ngưỡng độ phủ 90%, manifest Kubernetes `k8s/` | `docker-compose.yml` (healthcheck do A thêm 17/11), `Dockerfile`, `nginx.conf`, `.env.example` |
 | Test (`backend/tests/`) | Xem mục 2.2 | Xem mục 2.2 |
 | Tài liệu | Sơ đồ ER, ma trận phân quyền | Hướng dẫn chạy, kịch bản demo, bộ Postman (`docs/postman/`) |
 
-Giao diện của A nhiều hơn (khoảng 1.600 dòng so với 800 dòng của B); bù lại B giữ toàn bộ hạ tầng, CI và nhiều việc còn lại hơn ở mục 3.
+Từ 14/11, B làm lại toàn bộ giao diện của cả hai phần (bảng màu sáng, thành phần dùng chung, biểu đồ), nên phần giao diện của B lớn hơn; A giữ phần chốt code, test, CI, Kubernetes và tài liệu nộp.
 
 ### 2.1. File dùng chung
 
 **Không ai sở hữu riêng.** Ai sửa thì báo người kia trước, sửa nhỏ và commit riêng:
 - Backend: `models.py`, `schemas.py`, `seed.py`, `crud/common.py`, `crud/__init__.py`, `requirements.txt`
 - Frontend: `api.js`, `App.jsx` (khai báo route), `main.jsx`, `index.css`, `components/ui.jsx`, `components/Layout.jsx` (thanh bên), `components/StudentPicker.jsx`, `package.json`
+- Hạ tầng: `.github/workflows/ci.yml`
 
 **Có người phụ trách nhưng phần của người kia gọi tới.** Đổi tên hàm, tham số hay cách dùng thì phải báo:
 
@@ -43,10 +46,11 @@ Giao diện của A nhiều hơn (khoảng 1.600 dòng so với 800 dòng của 
 | `services/stats.py` | A | `services/insights.py` (B) dùng `attendance_rate` |
 | `errors.py`, `pagination.py`, `params.py` | B | Mọi router của A (mã lỗi, phân trang, kiểm tra id) |
 | `components/AiTabs.jsx` | B | Gắn trong `ClassDetail.jsx` và `Dashboard.jsx` (A) |
+| `components/feedback.jsx` (`useToast`, `useConfirm`) | B | Nút Xóa lớp trong `ClassDetail.jsx` (A), mọi trang có thông báo |
 
 ### 2.2. Test theo người
 
-Test đang nằm trong 5 file. Mỗi người chịu trách nhiệm giữ cho các test dưới đây luôn đạt và giải thích được chúng. Lần chạy ngày 05/11/2026: **90 test đạt** trong Docker và trên GitHub Actions, cả SQLite lẫn PostgreSQL (`docker compose run --rm --no-deps api python -m pytest -q`).
+Test đang nằm trong 8 file. Mỗi người chịu trách nhiệm giữ cho các test dưới đây luôn đạt và giải thích được chúng. Lần chạy ngày 17/11/2026: **120 test đạt**, độ phủ **98%**, trong Docker trên cả SQLite lẫn PostgreSQL (`docker compose run --rm --no-deps api python -m pytest -q --cov=app`).
 
 | File | A | B |
 |---|---|---|
@@ -55,15 +59,18 @@ Test đang nằm trong 5 file. Mỗi người chịu trách nhiệm giữ cho c�
 | `test_coach.py` | | toàn bộ |
 | `test_ai.py` | | toàn bộ |
 | `test_config.py` | toàn bộ | |
+| `test_classes_delete.py` | toàn bộ (xóa lớp, 5 test) | |
+| `test_tuition_edit.py` | toàn bộ (sửa, xóa học phí, 6 test; A viết 17/11) | giải thích được vì thuộc module Học phí |
+| `test_coverage.py` | điểm số, lớp theo vai trò, người dùng, liên kết phụ huynh, CSV lỗi, đổi mật khẩu, dữ liệu mẫu | tổng hợp và xuất Excel học phí, bộ soạn nhận xét theo luật |
 
-**Test mới:** A thêm vào `test_api.py`; B thêm vào file của module mình (`test_coach.py`, `test_ai.py`, hoặc tạo `test_tuition.py`). Không thêm test mới vào `test_extra.py`.
+**Test mới:** A thêm vào `test_api.py` hoặc file theo chức năng (`test_classes_delete.py`); B thêm vào file của module mình (`test_coach.py`, `test_ai.py`, `test_tuition_edit.py`). Không thêm test mới vào `test_extra.py`. CI báo đỏ nếu độ phủ dưới 90%.
 
 ## 3. Việc còn lại
 
 ### Thành viên A
-- [x] Màn **đổi mật khẩu** trên giao diện (API `POST /auth/change-password` đã có) — `frontend/src/pages/Account.jsx`
-- [x] Màn **liên kết phụ huynh với học viên** cho admin (API `POST /users/{id}/children` đã có) — mục "Quản lý" trong trang Người dùng
-- [x] Chức năng **sửa điểm** trên giao diện (API `PATCH /scores/{id}` đã có; nút xóa điểm đã có sẵn) — tab Điểm số của lớp
+- [x] Màn **đổi mật khẩu** trên giao diện (API `POST /auth/change-password` đã có): `frontend/src/pages/Account.jsx`
+- [x] Màn **liên kết phụ huynh với học viên** cho admin (API `POST /users/{id}/children` đã có): mục "Quản lý" trong trang Người dùng
+- [x] Chức năng **sửa điểm** trên giao diện (API `PATCH /scores/{id}` đã có; nút xóa điểm đã có sẵn): tab Điểm số của lớp
 - [x] Thêm test cho **ghi danh vào lớp** (thêm, trùng, xóa khỏi lớp) và **quản lý người dùng** (tạo, trùng tên, sửa, admin tự khóa mình). Phân trang và nhập CSV đã có test
 - [x] Cập nhật sơ đồ ER (`docs/eProjectSem02/diagrams/`)
 - [ ] Tập giải thích ma trận phân quyền bằng lời của mình (không đọc nguyên từ slide)
@@ -71,13 +78,21 @@ Test đang nằm trong 5 file. Mỗi người chịu trách nhiệm giữ cho c�
 - [x] Rà slide 1–10 cho khớp code mới (05/11/2026)
 
 ### Thành viên B
-- [x] Test giới hạn **20 lượt AI Coach mỗi ngày** — `test_coach_daily_limit` trong `test_coach.py` (giới hạn của AI hỗ trợ giáo viên: `test_ai_daily_limit` trong `test_ai.py`)
+- [x] Test giới hạn **20 lượt AI Coach mỗi ngày**: `test_coach_daily_limit` trong `test_coach.py` (giới hạn của AI hỗ trợ giáo viên: `test_ai_daily_limit` trong `test_ai.py`)
 - [ ] Thử tính năng **Cảnh báo** và **Nhận xét AI** trên giao diện với dữ liệu mẫu; ghi lại nếu luật rủi ro (ngưỡng trong `services/insights.py`) cần chỉnh cho hợp lý hơn
 - [ ] Giải thích được vì sao rủi ro tính bằng **luật** còn AI chỉ **gợi ý và soạn nháp** (xem câu hỏi bảo vệ trong `HUONG-DAN-CHAY.md`)
 - [x] **GitHub Actions** chạy `pytest` và `npm run build` mỗi lần push (Thái Phát làm, commit `fded8de`)
 - [x] Rà soát bảo mật cấu hình: `.env` không bị commit; `APP_ENV=prod` từ chối khởi động nếu `SECRET_KEY` hoặc `SEED_PASSWORD` còn mặc định, `dev` chỉ cảnh báo (Thái Phát làm, commit `fded8de`)
 - [x] Cập nhật slide 11–18 cho khớp code mới, thêm slide **AI hỗ trợ giáo viên** (05/11/2026)
 - [ ] (Tùy chọn) Bật Gemini thật bằng `GEMINI_API_KEY` và thử một lượt AI Coach: nhãn phải là **Gemini** và có đủ 4 tiêu chí kể cả Ngữ pháp. Nếu luôn rơi về "Ước lượng theo luật", xem log `hkii.coach` (chỉ ghi loại lỗi) để biết Gemini lỗi mạng, sai khóa hay trả sai định dạng
+
+### Thái Phát, chốt code trước khi nộp (17/11/2026, nhánh `feature/chot-truoc-nop`)
+- [x] Rà giao diện mới: 4 vai trò, mọi trang và tab, 1366x768 và 390x844, 3 bảng màu, trang 404, hộp xác nhận, thông báo, phím Tab (sửa nhỏ nút Gợi ý hành động)
+- [x] `DELETE /classes/{id}`: chỉ admin, chỉ lớp trống, còn dữ liệu trả 409 kèm lý do; nút Xóa lớp
+- [x] `PATCH` và `DELETE /tuition/{id}`: chỉ khoản chưa đóng; nút sửa, xóa ở trang Học phí
+- [x] Độ phủ test 92% lên 98% (`pytest-cov`), CI chặn khi dưới 90%
+- [x] Healthcheck `api`, `web` chờ `api` healthy; dữ liệu mẫu đủ 3 mức rủi ro, 3 trạng thái học phí, 1 nhận xét AI đã công bố cho `ph.an`
+- [x] Manifest Kubernetes `k8s/` (chạy thử trên minikube)
 
 ### Cả hai
 - [x] **Đưa code mới nhất lên GitHub:** repo `thaiphatcaifa/HKII-FastAPI`, nhánh `feature/hoan-thien-code`
@@ -108,10 +123,10 @@ Bài thuyết trình hiện có 18 slide (`docs/HKII-ThuyetTrinh.pptx`), mỗi s
 
 | Người nói | Nội dung | Slide |
 |---|---|---|
-| **A** | Mở đầu, 5 module, kiến trúc, CSDL, phân quyền | 1–7 |
-| **A** | Demo giáo viên điểm danh, báo cáo, phụ huynh theo dõi con | 8–10 |
-| **B** | Demo học phí, AI Coach, AI hỗ trợ giáo viên | 11–13 |
-| **B** | API, Docker, kiểm thử, hạn chế, kết luận | 14–18 |
+| **A** | Mở đầu, 5 module, kiến trúc, CSDL, phân quyền | 1 đến 7 |
+| **A** | Demo giáo viên điểm danh, báo cáo, phụ huynh theo dõi con | 8 đến 10 |
+| **B** | Demo học phí, AI Coach, AI hỗ trợ giáo viên | 11 đến 13 |
+| **B** | API, Docker, kiểm thử, hạn chế, kết luận | 14 đến 18 |
 
 Cả hai cùng trả lời phần hỏi đáp, ai nắm rõ hơn thì trả lời trước, người kia bổ sung.
 
