@@ -185,6 +185,16 @@ class TuitionCreate(BaseModel):
     note: str | None = Field(default=None, max_length=300)
 
 
+class TuitionUpdate(BaseModel):
+    """Sửa khoản học phí CHƯA đóng: chỉ đổi số tiền, hạn đóng, ghi chú (gửi trường nào sửa trường đó)."""
+
+    model_config = ConfigDict(json_schema_extra={"examples": [{"amount": 1800000, "due_date": "2026-12-15", "note": "Giảm 10%"}]})
+
+    amount: float | None = Field(default=None, gt=0)
+    due_date: dt.date | None = None
+    note: str | None = Field(default=None, max_length=300)
+
+
 class TuitionOut(ORM):
     id: int
     student_id: int

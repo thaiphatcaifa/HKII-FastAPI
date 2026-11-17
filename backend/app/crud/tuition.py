@@ -52,6 +52,24 @@ def mark_paid(db: Session, record: TuitionRecord) -> TuitionRecord:
     return record
 
 
+def update_record(db: Session, record: TuitionRecord, changes: dict, today: dt.date) -> TuitionRecord:
+    """Sửa khoản chưa đóng rồi tính lại trạng thái theo hạn đóng mới (quá hạn hay chưa đóng)."""
+    if "amount" in changes:
+        record.amount = Decimal(str(changes["amount"]))
+    if "due_date" in changes:
+        record.due_date = changes["due_date"]
+    if "note" in changes:
+        record.note = changes["note"]
+    record.status = TuitionStatus.overdue if record.due_date < today else TuitionStatus.unpaid
+    db.commit()
+    return record
+
+
+def delete_record(db: Session, record: TuitionRecord) -> None:
+    db.delete(record)
+    db.commit()
+
+
 def mark_overdue(db: Session, today: dt.date) -> int:
     result = db.execute(
         update(TuitionRecord)
