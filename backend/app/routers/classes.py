@@ -104,6 +104,31 @@ def update_class(
     return crud.classes.update_class(db, classroom, changes)
 
 
+# Nhãn tiếng Việt cho từng loại dữ liệu còn gắn với lớp (dùng trong thông báo 409)
+_DEPENDENT_LABELS = {
+    "enrollments": "học viên ghi danh",
+    "attendance": "bản ghi điểm danh",
+    "scores": "điểm số",
+    "tuition": "khoản học phí",
+    "ai_notes": "nhận xét AI",
+}
+
+
+@router.delete("/{class_id}", status_code=204)
+def delete_class(class_id: IdPath, db: Session = Depends(get_db), admin: User = Depends(admin_only)):
+    """Xóa lớp (chỉ admin). Lớp còn dữ liệu gắn kèm thì trả 409 kèm lý do, không xóa dây chuyền."""
+    classroom = get_class_or_404(db, class_id)
+    counts = crud.classes.dependent_counts(db, class_id)
+    remaining = [f"{n} {_DEPENDENT_LABELS[key]}" for key, n in counts.items() if n]
+    if remaining:
+        raise ConflictError(
+            f"Không thể xóa lớp {classroom.code} vì lớp còn " + ", ".join(remaining) + ". Hãy chuyển hoặc xóa các dữ liệu này trước."
+        )
+    code = classroom.code
+    crud.classes.delete_class(db, classroom)
+    logger.info("Admin %s xóa lớp %s", admin.username, code)
+
+
 @router.get("/{class_id}/students", response_model=list[UserOut])
 def list_class_students(
     class_id: IdPath,
