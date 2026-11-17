@@ -72,7 +72,7 @@ Test đang nằm trong 8 file. Mỗi người chịu trách nhiệm giữ cho c�
 - [x] Màn **liên kết phụ huynh với học viên** cho admin (API `POST /users/{id}/children` đã có): mục "Quản lý" trong trang Người dùng
 - [x] Chức năng **sửa điểm** trên giao diện (API `PATCH /scores/{id}` đã có; nút xóa điểm đã có sẵn): tab Điểm số của lớp
 - [x] Thêm test cho **ghi danh vào lớp** (thêm, trùng, xóa khỏi lớp) và **quản lý người dùng** (tạo, trùng tên, sửa, admin tự khóa mình). Phân trang và nhập CSV đã có test
-- [x] Cập nhật sơ đồ ER (`docs/eProjectSem02/diagrams/`)
+- [x] Cập nhật sơ đồ ER (`Documentations/diagrams/`)
 - [ ] Tập giải thích ma trận phân quyền bằng lời của mình (không đọc nguyên từ slide)
 - [x] Chạy test trên **PostgreSQL thật**: job `test-postgres` trong CI, dùng CSDL riêng `hkii_test`
 - [x] Rà slide 1–10 cho khớp code mới (05/11/2026)
