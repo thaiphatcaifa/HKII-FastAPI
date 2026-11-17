@@ -8,8 +8,9 @@ Database + Cloud Functions) bằng **FastAPI**, **PostgreSQL** và **Docker**. P
 ## Tài liệu
 
 - [Hướng dẫn chạy dự án, kịch bản demo và câu hỏi bảo vệ](docs/HUONG-DAN-CHAY.md)
-- Bài thuyết trình: `docs/HKII-ThuyetTrinh.pptx` (18 slide, có ghi chú lời nói ở từng slide)
-- [Tài liệu thiết kế eProject (Review 1, 2, 3, kiểm thử, Task Sheet)](Documentations/README.md)
+- Bài thuyết trình: `Documentations/EduCenter_Group03_Presentation.pptx` (25 slide trên mẫu của trường, có ghi chú lời nói và người nói ở từng slide)
+- Bảng số liệu gốc (sinh từ code): [Documentations/SO-LIEU.md](Documentations/SO-LIEU.md)
+- [Tài liệu nộp eProject: Documentation, Installation Guide, User Guide, Status Report](Documentations/README.md)
 - [Phân công công việc nhóm](docs/PHAN-CONG.md)
 
 ## 5 module

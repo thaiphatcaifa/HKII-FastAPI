@@ -119,16 +119,19 @@ Test đang nằm trong 8 file. Mỗi người chịu trách nhiệm giữ cho c�
 
 ## 5. Chia phần thuyết trình
 
-Bài thuyết trình hiện có 18 slide (`docs/HKII-ThuyetTrinh.pptx`), mỗi slide có ghi chú lời nói. Thêm slide thì đánh lại số trong bảng dưới.
+Bài thuyết trình chính thức: `Documentations/EduCenter_Group03_Presentation.pptx`, 25 slide dựng trên mẫu 05 của trường, mỗi slide có ghi chú lời nói mở đầu bằng tên người nói. Bản cũ `docs/HKII-ThuyetTrinh.pptx` (18 slide, 05/11/2026) giữ làm nguồn. Thêm slide thì đánh lại số trong bảng dưới.
 
 | Người nói | Nội dung | Slide |
 |---|---|---|
-| **A** | Mở đầu, 5 module, kiến trúc, CSDL, phân quyền | 1 đến 7 |
-| **A** | Demo giáo viên điểm danh, báo cáo, phụ huynh theo dõi con | 8 đến 10 |
-| **B** | Demo học phí, AI Coach, AI hỗ trợ giáo viên | 11 đến 13 |
-| **B** | API, Docker, kiểm thử, hạn chế, kết luận | 14 đến 18 |
-
-Cả hai cùng trả lời phần hỏi đáp, ai nắm rõ hơn thì trả lời trước, người kia bổ sung.
+| **A** | Mở đầu, nội dung, yêu cầu thực tế và yêu cầu dự án, 5 module, kiến trúc triển khai, công nghệ, CSDL, phân quyền | 1 đến 9 |
+| **A** | Demo giáo viên điểm danh, báo cáo, phụ huynh theo dõi con | 10 đến 12 |
+| **B** | Demo học phí (kể cả sửa, xóa), AI Coach, AI hỗ trợ giáo viên, giao diện mới | 13 đến 16 |
+| **B** | Kết quả kiểm thử, API và triển khai | 17 đến 19 |
+| **A** | Kiến thức HKI và HKII đã áp dụng | 20 |
+| **Cả hai** | Phân công, mỗi người nói phần của mình | 21 |
+| **B** | Kết luận, hạn chế và hướng phát triển | 22, 23 |
+| **Cả hai** | Cảm ơn và hỏi đáp | 24 |
+| **A** | Tài liệu tham khảo (chỉ mở khi được hỏi) | 25 |
 
 ## 6. Thứ tự gợi ý
 

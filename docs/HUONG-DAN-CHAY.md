@@ -1,7 +1,7 @@
 # Hướng dẫn chạy dự án HKII và chuẩn bị thuyết trình
 
 Tài liệu gồm 4 phần: **(1)** chạy dự án, **(2)** kiểm tra nhanh sau khi chạy, **(3)** kịch bản demo 8 phút,
-**(4)** câu hỏi thường gặp khi bảo vệ. Bài thuyết trình (slide) nằm ở `docs/HKII-ThuyetTrinh.pptx`.
+**(4)** câu hỏi thường gặp khi bảo vệ. Bài thuyết trình (slide) nằm ở `Documentations/EduCenter_Group03_Presentation.pptx`.
 
 ---
 
