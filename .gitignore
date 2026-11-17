@@ -24,3 +24,5 @@ admin.json
 .idea/
 .claude/settings.local.json
 TIEN-DO-CHOT-DO-AN.md
+.coverage
+htmlcov/
