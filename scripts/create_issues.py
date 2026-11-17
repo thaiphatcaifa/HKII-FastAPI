@@ -398,22 +398,6 @@ Trả lời tự tin các câu hỏi giảng viên thường đặt.
 - Mỗi người tự trả lời trọn bộ câu hỏi mà không nhìn tài liệu.
 """,
     },
-    {
-        "title": "Kiểm tra quy định khai báo công cụ AI của trường",
-        "who": "BOTH",
-        "labels": ["cả nhóm", "tài liệu"],
-        "body": """## Mục tiêu
-Tuân thủ quy định học thuật về việc dùng công cụ AI trong đồ án.
-
-## Việc cần làm
-- [ ] Đọc quy định hoặc hỏi giảng viên về việc dùng AI hỗ trợ viết code, tài liệu, slide
-- [ ] Nếu có yêu cầu khai báo, ghi rõ phần nào dùng AI hỗ trợ trong báo cáo
-- [ ] Mỗi thành viên đọc và hiểu phần code của mình để giải thích được khi được hỏi
-
-## Tiêu chí hoàn thành
-- Có kết luận rõ ràng về yêu cầu của trường và đã ghi vào báo cáo nếu cần.
-""",
-    },
 ]
 
 

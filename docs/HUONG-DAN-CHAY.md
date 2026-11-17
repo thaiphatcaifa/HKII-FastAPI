@@ -277,7 +277,7 @@ Chỉ admin dùng được; giới hạn 1 MB và 100 dòng; kiểm tra từng d
 
 **Bảo mật được làm thế nào?**
 Mật khẩu băm bcrypt; đăng nhập trả JWT (HS256, hết hạn sau 8 giờ); khóa tạm 15 phút sau 5 lần sai;
-thông báo lỗi đăng nhập gộp chung để không lộ tài khoản có tồn tại; phân quyền theo vai trò kiểm tra ở backend (`deps.py`),
+sai mật khẩu hay sai tên đăng nhập đều nhận cùng một thông báo 401 (chưa kín hoàn toàn: tài khoản có thật bị khóa sau 5 lần sai sẽ trả 423, nên vẫn suy ra được tài khoản tồn tại; hướng cải thiện là giới hạn tần suất theo IP); phân quyền theo vai trò kiểm tra ở backend (`deps.py`),
 không dựa vào giao diện; khóa và mật khẩu lấy từ biến môi trường, `.env` không được commit.
 Khi `APP_ENV=prod`, API từ chối khởi động nếu `SECRET_KEY` hoặc `SEED_PASSWORD` còn giá trị mặc định công khai trong repo.
 

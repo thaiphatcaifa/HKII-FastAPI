@@ -104,7 +104,6 @@ Test đang nằm trong 8 file. Mỗi người chịu trách nhiệm giữ cho c�
 - [ ] Chạy lại các bước trên ở máy của La Vĩ Quyền (máy khác, chưa từng cài project)
 - [ ] Tập demo theo `docs/HUONG-DAN-CHAY.md` (mục 3), có phương án dự phòng
 - [ ] Đọc danh sách câu hỏi bảo vệ (mục 4 cùng file) và tự trả lời không nhìn tài liệu
-- [ ] Kiểm tra quy định của trường về việc **khai báo công cụ AI**, ghi vào báo cáo nếu cần
 
 ## 4. Cách làm việc với Git
 
