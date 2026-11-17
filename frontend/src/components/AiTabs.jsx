@@ -312,7 +312,7 @@ export function ReviewsTab({ classId, students }) {
         </button>
       </form>
       <p className="text-xs text-slate-500">
-        Bản nháp chỉ mình bạn thấy. Học viên và phụ huynh chỉ đọc được sau khi bạn bấm <b>Công bố</b>.
+        Bản nháp chỉ giáo viên phụ trách lớp và quản trị viên xem được. Học viên và phụ huynh chỉ đọc được sau khi bấm <b>Công bố</b>.
       </p>
       <ErrorBox message={reviews.error} />
 
