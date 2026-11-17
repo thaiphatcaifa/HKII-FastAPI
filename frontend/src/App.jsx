@@ -10,6 +10,7 @@ import Coach from './pages/Coach'
 import Dashboard from './pages/Dashboard'
 import Grades from './pages/Grades'
 import Login from './pages/Login'
+import NotFound from './pages/NotFound'
 import Tuition from './pages/Tuition'
 import Users from './pages/Users'
 
@@ -90,8 +91,8 @@ export default function App() {
             </Protected>
           }
         />
+        <Route path="*" element={<NotFound />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
