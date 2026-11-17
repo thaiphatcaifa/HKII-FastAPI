@@ -22,3 +22,7 @@ admin.json
 .vscode/*
 !.vscode/extensions.json
 .idea/
+.claude/settings.local.json
+TIEN-DO-CHOT-DO-AN.md
+.coverage
+htmlcov/

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   CalendarCheck,
   ChartNoAxesColumn,
@@ -729,8 +729,12 @@ const TAB_DEFS = [
 export default function ClassDetail() {
   const { id } = useParams()
   const { user } = useAuth()
+  const navigate = useNavigate()
+  const toast = useToast()
+  const confirm = useConfirm()
   const [params, setParams] = useSearchParams()
   const [editingClass, setEditingClass] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const { data, error, loading, reload } = useAsync(async () => {
     const [classroom, students] = await Promise.all([api.get(`/classes/${id}`), api.get(`/classes/${id}/students`)])
     return { classroom, students }
@@ -739,6 +743,26 @@ export default function ClassDetail() {
   // Tab nằm trên đường dẫn (?tab=risk) để mở thẳng từ trang Tổng quan và giữ nguyên khi tải lại trang
   const tab = TAB_DEFS.some((t) => t.key === params.get('tab')) ? params.get('tab') : 'students'
   const setTab = (key) => setParams(key === 'students' ? {} : { tab: key }, { replace: true })
+
+  // Xóa lớp: máy chủ chỉ cho xóa lớp trống, lớp còn dữ liệu thì trả 409 kèm lý do để hiện ra thông báo
+  const deleteClass = async (classroom) => {
+    const ok = await confirm({
+      title: `Xóa lớp ${classroom.code}?`,
+      message: 'Chỉ xóa được lớp trống (không còn học viên, điểm danh, điểm số, học phí, nhận xét AI). Thao tác này không hoàn tác được.',
+      confirmLabel: 'Xóa lớp',
+      tone: 'danger',
+    })
+    if (!ok) return
+    setDeleting(true)
+    try {
+      await api.del(`/classes/${classroom.id}`)
+      toast.success(`Đã xóa lớp ${classroom.code}.`)
+      navigate('/classes', { replace: true })
+    } catch (err) {
+      toast.error(err.message)
+      setDeleting(false)
+    }
+  }
 
   if (loading) return <Loading />
   if (error) return <ErrorBox message={error} />
@@ -759,10 +783,20 @@ export default function ClassDetail() {
         ]}
         action={
           user.role === 'admin' && !editingClass ? (
-            <button className="btn-ghost" onClick={() => setEditingClass(true)}>
-              <Pencil className="h-4 w-4" />
-              Sửa thông tin lớp
-            </button>
+            <>
+              <button className="btn-ghost" onClick={() => setEditingClass(true)}>
+                <Pencil className="h-4 w-4" />
+                Sửa thông tin lớp
+              </button>
+              <button
+                className="btn-ghost text-rose-700 hover:border-rose-200 hover:bg-rose-50"
+                onClick={() => deleteClass(classroom)}
+                disabled={deleting}
+              >
+                {deleting ? <Spinner /> : <Trash2 className="h-4 w-4" />}
+                Xóa lớp
+              </button>
+            </>
           ) : null
         }
       />

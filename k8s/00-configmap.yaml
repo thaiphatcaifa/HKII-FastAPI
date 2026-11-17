@@ -1,0 +1,17 @@
+# Cấu hình không bí mật, dùng chung cho api và db.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hkii-config
+  labels:
+    app.kubernetes.io/part-of: hkii
+data:
+  APP_ENV: "dev"
+  POSTGRES_USER: "hkii"
+  POSTGRES_DB: "hkii"
+  GEMINI_MODEL: "gemini-2.5-flash"
+  AI_DAILY_LIMIT: "30"
+  SEED_ON_START: "true"
+  CORS_ORIGINS: "http://localhost:8080"
+  LOG_LEVEL: "INFO"
+  SLOW_REQUEST_MS: "500"

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarClock, CircleCheck, Download, Plus, TriangleAlert, Wallet, X } from 'lucide-react'
+import { CalendarClock, CircleCheck, Download, Pencil, Plus, Save, Trash2, TriangleAlert, Wallet, X } from 'lucide-react'
 import { api, download } from '../api'
 import { useAuth } from '../auth'
 import { useConfirm, useToast } from '../components/feedback'
@@ -56,8 +56,41 @@ const NameCell = ({ name }) => (
   </div>
 )
 
+// Nút thao tác của admin trên một khoản chưa đóng: ghi nhận đã đóng, sửa, xóa
+function RowActions({ row, onPay, onEdit, onDelete, busyId, wide = false }) {
+  if (row.status === 'paid') return null
+  const busy = busyId === row.id
+  const size = wide ? '' : 'btn-sm'
+  return (
+    <div className={`flex items-center gap-2 ${wide ? 'mt-3' : 'justify-end'}`}>
+      <button className={`btn-ghost ${wide ? 'flex-1' : 'btn-sm'}`} disabled={busy} onClick={() => onPay(row)}>
+        {busy ? <Spinner /> : <CircleCheck className="h-4 w-4" />}
+        Ghi nhận đã đóng
+      </button>
+      <button
+        className={`btn-ghost ${size}`}
+        disabled={busy}
+        onClick={() => onEdit(row)}
+        aria-label="Sửa khoản học phí"
+        title="Sửa khoản học phí"
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
+      <button
+        className={`btn-ghost text-rose-700 hover:border-rose-200 hover:bg-rose-50 ${size}`}
+        disabled={busy}
+        onClick={() => onDelete(row)}
+        aria-label="Xóa khoản học phí"
+        title="Xóa khoản học phí"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
+  )
+}
+
 // Bảng trên máy tính, danh sách thẻ trên điện thoại
-function TuitionList({ rows, nameOf, onPay, payingId, emptyHint }) {
+function TuitionList({ rows, nameOf, onPay, onEdit, onDelete, busyId, emptyHint }) {
   if (rows.length === 0) {
     return (
       <EmptyState icon={Wallet} title="Không có khoản học phí nào">
@@ -88,12 +121,7 @@ function TuitionList({ rows, nameOf, onPay, payingId, emptyHint }) {
               <DueHint row={t} />
             </div>
             {t.note && <p className="mt-1 text-sm text-slate-500">{t.note}</p>}
-            {onPay && t.status !== 'paid' && (
-              <button className="btn-ghost mt-3 w-full" disabled={payingId === t.id} onClick={() => onPay(t)}>
-                {payingId === t.id ? <Spinner /> : <CircleCheck className="h-4 w-4" />}
-                Ghi nhận đã đóng
-              </button>
-            )}
+            {onPay && <RowActions row={t} onPay={onPay} onEdit={onEdit} onDelete={onDelete} busyId={busyId} wide />}
           </li>
         ))}
       </ul>
@@ -129,12 +157,7 @@ function TuitionList({ rows, nameOf, onPay, payingId, emptyHint }) {
                 <td className="td text-slate-500">{t.note || '—'}</td>
                 {onPay && (
                   <td className="td text-right">
-                    {t.status !== 'paid' && (
-                      <button className="btn-ghost btn-sm" disabled={payingId === t.id} onClick={() => onPay(t)}>
-                        {payingId === t.id ? <Spinner /> : <CircleCheck className="h-4 w-4" />}
-                        Ghi nhận đã đóng
-                      </button>
-                    )}
+                    <RowActions row={t} onPay={onPay} onEdit={onEdit} onDelete={onDelete} busyId={busyId} />
                   </td>
                 )}
               </tr>
@@ -230,6 +253,77 @@ function CreateTuition({ students, onCreated, onCancel }) {
   )
 }
 
+// Sửa khoản chưa đóng: số tiền, hạn đóng, ghi chú. Trạng thái do máy chủ tính lại theo hạn đóng mới.
+function EditTuition({ row, studentName, onSaved, onCancel }) {
+  const toast = useToast()
+  const [form, setForm] = useState({ amount: String(row.amount), due_date: row.due_date, note: row.note || '' })
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
+  const amount = Number(form.amount)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setBusy(true)
+    try {
+      await api.patch(`/tuition/${row.id}`, { amount, due_date: form.due_date, note: form.note.trim() || null })
+      toast.success(`Đã cập nhật khoản học phí của ${studentName}.`)
+      onSaved()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="card mb-6 animate-pop-in space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-slate-900">Sửa khoản học phí · {studentName}</h2>
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label="Đóng biểu mẫu"
+          className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="Số tiền (₫)" hint={amount >= 1000 ? `= ${money(amount)}` : undefined}>
+          <input
+            className="input"
+            type="number"
+            min="1000"
+            step="1000"
+            value={form.amount}
+            onChange={set('amount')}
+            required
+            autoFocus
+          />
+        </Field>
+        <Field label="Hạn đóng">
+          <input className="input" type="date" value={form.due_date} onChange={set('due_date')} required />
+        </Field>
+        <Field label="Ghi chú">
+          <input className="input" value={form.note} onChange={set('note')} />
+        </Field>
+      </div>
+      <ErrorBox message={error} />
+      <div className="flex justify-end gap-2">
+        <button type="button" className="btn-ghost" onClick={onCancel}>
+          Hủy
+        </button>
+        <button className="btn-primary" disabled={busy}>
+          {busy ? <Spinner /> : <Save className="h-4 w-4" />}
+          {busy ? 'Đang lưu…' : 'Lưu thay đổi'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
 function AdminTuition() {
   const toast = useToast()
   const confirm = useConfirm()
@@ -237,7 +331,8 @@ function AdminTuition() {
   const [q, setQ] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [busy, setBusy] = useState('') // 'overdue' | 'export' khi đang chạy
-  const [payingId, setPayingId] = useState(null)
+  const [busyId, setBusyId] = useState(null) // khoản đang ghi nhận đóng hoặc đang xóa
+  const [editing, setEditing] = useState(null) // khoản đang sửa
   const { data, error, loading, reload } = useAsync(async () => {
     const [rows, students, summary] = await Promise.all([
       api.getAll('/tuition'),
@@ -296,16 +391,44 @@ function AdminTuition() {
       confirmLabel: 'Ghi nhận',
     })
     if (!ok) return
-    setPayingId(t.id)
+    setBusyId(t.id)
     try {
       await api.post(`/tuition/${t.id}/pay`)
+      if (editing?.id === t.id) setEditing(null)
       toast.success(`Đã ghi nhận ${nameOf(t.student_id)} đóng ${money(t.amount)}.`)
       await reload()
     } catch (err) {
       toast.error(err.message)
     } finally {
-      setPayingId(null)
+      setBusyId(null)
     }
+  }
+
+  const remove = async (t) => {
+    const ok = await confirm({
+      title: 'Xóa khoản học phí?',
+      message: `Khoản ${money(t.amount)} của ${nameOf(t.student_id)} (hạn ${fmtDate(t.due_date)}) sẽ bị xóa. Chỉ xóa được khoản chưa đóng.`,
+      confirmLabel: 'Xóa khoản',
+      tone: 'danger',
+    })
+    if (!ok) return
+    setBusyId(t.id)
+    try {
+      await api.del(`/tuition/${t.id}`)
+      if (editing?.id === t.id) setEditing(null)
+      toast.success(`Đã xóa khoản học phí của ${nameOf(t.student_id)}.`)
+      await reload()
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const startEdit = (t) => {
+    setShowForm(false)
+    setEditing(t)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   if (loading) return <Loading />
@@ -327,7 +450,14 @@ function AdminTuition() {
           {busy === 'export' ? <Spinner /> : <Download className="h-4 w-4" />}
           Xuất Excel
         </button>
-        <button className="btn-primary" onClick={() => setShowForm((v) => !v)} aria-expanded={showForm}>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            setEditing(null)
+            setShowForm((v) => !v)
+          }}
+          aria-expanded={showForm}
+        >
           <Plus className="h-4 w-4" />
           Tạo khoản
         </button>
@@ -363,6 +493,19 @@ function AdminTuition() {
         />
       )}
 
+      {editing && (
+        <EditTuition
+          key={editing.id}
+          row={editing}
+          studentName={nameOf(editing.student_id)}
+          onCancel={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
+            reload()
+          }}
+        />
+      )}
+
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Segmented
           label="Lọc theo trạng thái"
@@ -382,7 +525,9 @@ function AdminTuition() {
         rows={visible}
         nameOf={nameOf}
         onPay={pay}
-        payingId={payingId}
+        onEdit={startEdit}
+        onDelete={remove}
+        busyId={busyId}
         emptyHint={q || status ? 'Thử đổi bộ lọc hoặc từ khóa tìm kiếm.' : 'Bấm "Tạo khoản" để thêm khoản học phí đầu tiên.'}
       />
       {visible.length > 0 && (

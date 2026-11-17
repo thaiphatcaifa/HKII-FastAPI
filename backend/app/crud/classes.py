@@ -1,8 +1,8 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.crud.common import paginate
-from app.models import Classroom, Enrollment, User
+from app.models import AiNote, Attendance, Classroom, Enrollment, Score, TuitionRecord, User
 
 
 def get_class(db: Session, class_id: int) -> Classroom | None:
@@ -43,6 +43,26 @@ def update_class(db: Session, classroom: Classroom, changes: dict) -> Classroom:
         setattr(classroom, field, value)
     db.commit()
     return classroom
+
+
+def dependent_counts(db: Session, class_id: int) -> dict[str, int]:
+    """Đếm dữ liệu còn gắn với lớp. Lớp chỉ được xóa khi mọi số đếm bằng 0."""
+    models = {
+        "enrollments": Enrollment,
+        "attendance": Attendance,
+        "scores": Score,
+        "tuition": TuitionRecord,
+        "ai_notes": AiNote,
+    }
+    return {
+        key: db.scalar(select(func.count()).select_from(model).where(model.class_id == class_id)) or 0
+        for key, model in models.items()
+    }
+
+
+def delete_class(db: Session, classroom: Classroom) -> None:
+    db.delete(classroom)
+    db.commit()
 
 
 # ---------- Ghi danh ----------

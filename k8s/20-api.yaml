@@ -1,0 +1,66 @@
+# FastAPI: chờ db sẵn sàng (initContainer), chạy migration rồi uvicorn (CMD của Dockerfile).
+# Liveness và readiness gọi GET /health.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  labels:
+    app: api
+    app.kubernetes.io/part-of: hkii
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      initContainers:
+        - name: wait-for-db
+          image: postgres:16-alpine
+          command: ["sh", "-c", "until pg_isready -h db -p 5432; do echo 'Đang chờ db...'; sleep 2; done"]
+      containers:
+        - name: api
+          image: hkii-api:1.0 # build sẵn trong minikube: xem docs/HUONG-DAN-CHAY.md
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: hkii-config
+          env:
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: hkii-secret, key: DATABASE_URL } }
+            - name: SECRET_KEY
+              valueFrom: { secretKeyRef: { name: hkii-secret, key: SECRET_KEY } }
+            - name: SEED_PASSWORD
+              valueFrom: { secretKeyRef: { name: hkii-secret, key: SEED_PASSWORD } }
+            - name: GEMINI_API_KEY
+              valueFrom: { secretKeyRef: { name: hkii-secret, key: GEMINI_API_KEY, optional: true } }
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests: { cpu: 100m, memory: 192Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api # nginx của web gọi http://api:8000 nên tên Service phải là "api"
+  labels:
+    app.kubernetes.io/part-of: hkii
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 8000
+      targetPort: 8000

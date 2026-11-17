@@ -198,7 +198,7 @@ export function RiskTab({ classId }) {
                   </td>
                   <td className="td text-right">
                     {r.reasons.length > 0 && (
-                      <button className="btn-ghost btn-sm" disabled={busyId === r.student_id} onClick={() => ask(r.student_id)}>
+                      <button className="btn-ghost btn-sm whitespace-nowrap" disabled={busyId === r.student_id} onClick={() => ask(r.student_id)}>
                         {busyId === r.student_id ? <Spinner /> : <Sparkles className="h-4 w-4" />}
                         {busyId === r.student_id ? 'Đang soạn…' : advice[r.student_id] ? 'Gợi ý lại' : 'Gợi ý hành động'}
                       </button>

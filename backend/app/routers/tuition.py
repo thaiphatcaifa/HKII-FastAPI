@@ -7,11 +7,11 @@ from sqlalchemy.orm import Session
 from app import crud
 from app.db import get_db
 from app.deps import current_user, require_roles, visible_student_ids
-from app.errors import ConflictError, ForbiddenError, NotFoundError
+from app.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
 from app.models import Role, TuitionStatus, User
 from app.params import IdPath
 from app.pagination import Page, page_params, set_total
-from app.schemas import TuitionCreate, TuitionOut, TuitionSummary
+from app.schemas import TuitionCreate, TuitionOut, TuitionSummary, TuitionUpdate
 from app.services.tuition_jobs import refresh_overdue
 
 router = APIRouter(prefix="/tuition", tags=["tuition"])
@@ -72,6 +72,42 @@ def mark_paid(record_id: IdPath, db: Session = Depends(get_db), admin: User = De
     paid = crud.tuition.mark_paid(db, record)
     logger.info("Admin %s ghi nhận thanh toán khoản học phí id=%d", admin.username, record_id)
     return paid
+
+
+def _unpaid_record_or_error(db: Session, record_id: int):
+    record = crud.tuition.get_record(db, record_id)
+    if record is None:
+        raise NotFoundError("Không tìm thấy khoản học phí.")
+    if record.status == TuitionStatus.paid:
+        raise ConflictError("Khoản này đã thanh toán nên không sửa hoặc xóa được.")
+    return record
+
+
+@router.patch("/{record_id}", response_model=TuitionOut)
+def update_record(
+    record_id: IdPath,
+    data: TuitionUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(admin_only),
+):
+    """Sửa số tiền, hạn đóng, ghi chú của khoản CHƯA đóng. Trạng thái tự tính lại theo hạn đóng mới."""
+    record = _unpaid_record_or_error(db, record_id)
+    changes = data.model_dump(exclude_unset=True)
+    if not changes:
+        raise BadRequestError("Không có thông tin nào để sửa.")
+    if any(changes[key] is None for key in ("amount", "due_date") if key in changes):
+        raise BadRequestError("Số tiền và hạn đóng không được để trống.")
+    updated = crud.tuition.update_record(db, record, changes, dt.date.today())
+    logger.info("Admin %s sửa khoản học phí id=%d (%s)", admin.username, record_id, ", ".join(sorted(changes)))
+    return updated
+
+
+@router.delete("/{record_id}", status_code=204)
+def delete_record(record_id: IdPath, db: Session = Depends(get_db), admin: User = Depends(admin_only)):
+    """Xóa khoản học phí CHƯA đóng (tạo nhầm). Khoản đã đóng là chứng từ nên không xóa được (409)."""
+    record = _unpaid_record_or_error(db, record_id)
+    crud.tuition.delete_record(db, record)
+    logger.info("Admin %s xóa khoản học phí id=%d", admin.username, record_id)
 
 
 @router.post("/mark-overdue")

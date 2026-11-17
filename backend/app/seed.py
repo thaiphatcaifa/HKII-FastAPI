@@ -12,6 +12,9 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import SessionLocal
 from app.models import (
+    AiNote,
+    AiNoteKind,
+    AiNoteStatus,
     Attendance,
     AttendanceStatus,
     Classroom,
@@ -103,20 +106,56 @@ def seed_if_empty(db: Session) -> bool:
     for i, s in enumerate(students):
         due = today + dt.timedelta(days=rng.choice([-20, -5, 10, 25]))
         paid = i % 3 == 0
+        if paid:
+            status = TuitionStatus.paid
+        else:
+            # Khoản chưa đóng đã qua hạn thì ghi luôn là quá hạn, để ngay sau khi seed có đủ 3 trạng thái
+            status = TuitionStatus.overdue if due < today else TuitionStatus.unpaid
         db.add(
             TuitionRecord(
                 student_id=s.id,
                 class_id=classes[i % 3].id,
                 amount=Decimal(rng.choice([1_500_000, 2_200_000, 3_000_000])),
                 due_date=due,
-                status=TuitionStatus.paid if paid else TuitionStatus.unpaid,
+                status=status,
                 paid_at=dt.datetime.now(dt.timezone.utc) if paid else None,
                 note="Học phí tháng",
             )
         )
+    db.flush()
+
+    _seed_published_review(db, classroom=classes[0], student=students[0], teacher=teachers[0])
 
     db.commit()
     return True
+
+
+def _seed_published_review(db: Session, *, classroom: Classroom, student: User, teacher: User) -> None:
+    """Một nhận xét AI ĐÃ CÔNG BỐ cho hv01 ở lớp IELTS-A1 để phụ huynh ph.an thấy ngay khi demo.
+
+    Nội dung do bộ soạn theo luật sinh từ chính số liệu điểm danh và điểm số vừa tạo (không cần Gemini).
+    """
+    from app.services.insights import assess_student
+    from app.services.insights_ai import review_fallback
+
+    insight = assess_student(db, classroom.id, student.id, student.full_name)
+    # Soạn 3 ngày trước, công bố 2 ngày trước: không tính vào lượt AI hôm nay của giáo viên
+    created = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=3)
+    published = created + dt.timedelta(days=1)
+    db.add(
+        AiNote(
+            kind=AiNoteKind.review,
+            class_id=classroom.id,
+            student_id=student.id,
+            author_id=teacher.id,
+            content=review_fallback(insight),
+            provider="rules",
+            status=AiNoteStatus.published,
+            created_at=created,
+            updated_at=published,
+            published_at=published,
+        )
+    )
 
 
 if __name__ == "__main__":

@@ -22,7 +22,7 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r requirements.txt
-      - run: python -m pytest -q
+      - run: python -m pytest -q --cov=app --cov-report=term --cov-fail-under=90
 
   test-postgres:
     name: pytest (PostgreSQL)
@@ -55,7 +55,7 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r requirements.txt
-      - run: python -m pytest -q
+      - run: python -m pytest -q --cov=app --cov-report=term --cov-fail-under=90
 
   frontend-build:
     name: Build frontend
