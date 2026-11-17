@@ -182,9 +182,10 @@ def test_review_workflow(client, admin, teacher, student, parent):
     assert note["status"] == "draft" and note["provider"] == "rules" and note["published_at"] is None
     note_id = note["id"]
 
-    # Nháp: chỉ giáo viên thấy
-    assert client.get("/ai/reviews", headers=student).json() == []
-    assert client.get("/ai/reviews", headers=parent).json() == []
+    # Nháp: chỉ giáo viên thấy (lọc theo lớp thử vì dữ liệu mẫu đã có sẵn một nhận xét công bố của hv01)
+    mine = f"/ai/reviews?class_id={class_id}"
+    assert client.get(mine, headers=student).json() == []
+    assert client.get(mine, headers=parent).json() == []
     assert len(client.get(f"/ai/reviews?class_id={class_id}", headers=teacher).json()) == 1
 
     # Giáo viên sửa rồi công bố
@@ -196,19 +197,19 @@ def test_review_workflow(client, admin, teacher, student, parent):
 
     # Học viên và phụ huynh của em đó đọc được; người khác thì không
     for who in (student, parent):
-        seen = client.get("/ai/reviews", headers=who)
+        seen = client.get(mine, headers=who)
         assert seen.status_code == 200
         assert [n["id"] for n in seen.json()] == [note_id]
         assert int(seen.headers["X-Total-Count"]) == 1
     assert client.get("/ai/reviews", headers=login(client, "hv02")).json() == []
     assert client.get("/ai/reviews", headers=login(client, "ph.ha")).json() == []
     # Học viên cố xem nháp bằng tham số status vẫn chỉ thấy bản đã công bố
-    assert len(client.get("/ai/reviews?status=draft", headers=student).json()) == 1
+    assert len(client.get(f"{mine}&status=draft", headers=student).json()) == 1
 
     # Thu hồi về nháp -> biến mất khỏi phía học viên
     back = client.post(f"/ai/reviews/{note_id}/unpublish", headers=teacher)
     assert back.json()["status"] == "draft" and back.json()["published_at"] is None
-    assert client.get("/ai/reviews", headers=student).json() == []
+    assert client.get(mine, headers=student).json() == []
 
     # Xóa
     assert client.delete(f"/ai/reviews/{note_id}", headers=teacher).status_code == 204

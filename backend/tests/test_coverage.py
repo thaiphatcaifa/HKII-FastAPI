@@ -233,3 +233,23 @@ def test_advice_fallback_without_factors():
     from app.services.insights_ai import advice_fallback
 
     assert advice_fallback(_insight()) == "- Học viên đang ổn định, tiếp tục theo dõi định kỳ."
+
+
+# ---------- Dữ liệu mẫu sau khi seed (phục vụ demo) ----------
+def test_seed_gives_demo_ready_data(client, admin, parent, teacher):
+    levels = set()
+    for c in client.get("/classes", headers=admin).json():
+        levels |= {r["level"] for r in client.get(f"/ai/risk?class_id={c['id']}", headers=admin).json()}
+    assert levels == {"high", "medium", "low"}  # Cảnh báo rủi ro đủ 3 mức
+    counts = client.get("/tuition/summary", headers=admin).json()["count_by_status"]
+    assert all(counts[s] > 0 for s in ("unpaid", "paid", "overdue"))  # học phí đủ 3 trạng thái
+    reviews = client.get("/ai/reviews", headers=parent).json()
+    hv01 = user_id(client, admin, "hv01")
+    assert len(reviews) == 1 and reviews[0]["student_id"] == hv01 and reviews[0]["status"] == "published"
+    assert reviews[0]["content"]
+    # Nhận xét mẫu không ăn vào lượt AI hôm nay của giáo viên
+    from app.config import settings
+
+    assert settings.ai_daily_limit >= 1
+    a1 = next(c for c in client.get("/classes", headers=teacher).json() if c["code"] == "IELTS-A1")
+    assert client.post("/ai/reviews", json={"class_id": a1["id"], "student_id": hv01}, headers=teacher).status_code == 201
