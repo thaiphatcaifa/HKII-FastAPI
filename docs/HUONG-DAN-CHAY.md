@@ -139,6 +139,53 @@ npm run dev        # http://localhost:5173, tự chuyển /api sang http://local
 
 Do `docker-compose.yml` đặt `restart: unless-stopped`, container sẽ tự thử lại cho đến khi sửa xong `.env`. Lúc đó chạy `docker compose up -d` để áp dụng.
 
+### 1.11 Chạy trên Kubernetes bằng minikube (tùy chọn)
+
+Thư mục `k8s/` chứa manifest cho cùng 3 thành phần như Docker Compose:
+
+| File | Nội dung |
+|---|---|
+| `00-configmap.yaml` | ConfigMap `hkii-config`: cấu hình không bí mật (`APP_ENV`, `POSTGRES_USER`, `POSTGRES_DB`, `GEMINI_MODEL`, `AI_DAILY_LIMIT`, `SEED_ON_START`, ...) |
+| `01-secret.example.yaml` | Secret **mẫu** `hkii-secret`, chỉ có chỗ trống, không chứa giá trị thật. Không commit bản đã điền |
+| `10-db.yaml` | PVC `hkii-pgdata` (1 Gi) + Deployment `db` (postgres:16-alpine, probe `pg_isready`) + Service `db` |
+| `20-api.yaml` | Deployment `api` (initContainer chờ db, liveness và readiness gọi `GET /health`) + Service `api` cổng 8000 |
+| `30-web.yaml` | Deployment `web` (nginx, readiness gọi `/api/health`, liveness gọi `/`) + Service `web` kiểu NodePort 30080 |
+
+Cần cài sẵn **minikube** và **kubectl** (Docker Desktop đã kèm kubectl). Các bước, chạy ở thư mục gốc repo:
+
+```bash
+# 1. Khởi động cụm
+minikube start
+
+# 2. Build image ngay trong minikube (manifest dùng tên hkii-api:1.0 và hkii-web:1.0)
+minikube image build -t hkii-api:1.0 ./backend
+minikube image build -t hkii-web:1.0 ./frontend
+
+# 3. Tạo Secret bằng lệnh (không ghi mật khẩu ra file). Thay <mat-khau-db> và <chuoi-bi-mat> bằng giá trị riêng;
+#    <mat-khau-db> phải giống nhau ở POSTGRES_PASSWORD và DATABASE_URL.
+kubectl create secret generic hkii-secret \
+  --from-literal=POSTGRES_PASSWORD=<mat-khau-db> \
+  --from-literal=DATABASE_URL=postgresql+psycopg://hkii:<mat-khau-db>@db:5432/hkii \
+  --from-literal=SECRET_KEY=<chuoi-bi-mat> \
+  --from-literal=SEED_PASSWORD=Hkii@12345 \
+  --from-literal=GEMINI_API_KEY=
+
+# 4. Triển khai (không apply file secret mẫu vì Secret đã tạo ở bước 3)
+kubectl apply -f k8s/00-configmap.yaml -f k8s/10-db.yaml -f k8s/20-api.yaml -f k8s/30-web.yaml
+kubectl rollout status deploy/api
+kubectl get pods,svc,pvc
+
+# 5. Mở giao diện: giữ cửa sổ này mở rồi vào http://localhost:8081
+kubectl port-forward svc/web 8081:80
+```
+
+- Trên Windows (minikube chạy bằng Docker), NodePort không mở thẳng từ máy được, nên dùng `kubectl port-forward` như bước 5 (hoặc `minikube service web --url`).
+- Kiểm tra: `curl http://localhost:8081/api/health` trả `{"status":"ok"}`, đăng nhập bằng tài khoản mẫu như mục 1.4.
+- Thử tự phục hồi: `kubectl delete pod -l app=api`, Kubernetes tạo Pod mới và chỉ đưa vào Service khi `/health` trả 200.
+- Thử lưu trữ bền: tạo một lớp, `kubectl delete pod -l app=db`, lớp vẫn còn vì dữ liệu nằm trên PVC.
+- Sửa code thì build lại image (bước 2) rồi `kubectl rollout restart deploy/api deploy/web`.
+- Gỡ toàn bộ: `kubectl delete -f k8s/00-configmap.yaml -f k8s/10-db.yaml -f k8s/20-api.yaml -f k8s/30-web.yaml` và `kubectl delete secret hkii-secret` (xóa cả PVC nên mất dữ liệu). Dừng cụm: `minikube stop`.
+
 ---
 
 ## 2. Kiểm tra nhanh sau khi chạy

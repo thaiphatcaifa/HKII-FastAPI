@@ -1,0 +1,75 @@
+# PostgreSQL: ổ lưu trữ bền (PVC) + Deployment 1 bản + Service nội bộ tên "db".
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hkii-pgdata
+  labels:
+    app.kubernetes.io/part-of: hkii
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  labels:
+    app: db
+    app.kubernetes.io/part-of: hkii
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # chỉ một Pod được gắn ổ dữ liệu cùng lúc
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom: { configMapKeyRef: { name: hkii-config, key: POSTGRES_USER } }
+            - name: POSTGRES_DB
+              valueFrom: { configMapKeyRef: { name: hkii-config, key: POSTGRES_DB } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: hkii-secret, key: POSTGRES_PASSWORD } }
+            - name: PGDATA # thư mục con, tránh lỗi thư mục gốc của ổ có sẵn lost+found
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: hkii-pgdata
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  labels:
+    app.kubernetes.io/part-of: hkii
+spec:
+  selector:
+    app: db
+  ports:
+    - port: 5432
+      targetPort: 5432
