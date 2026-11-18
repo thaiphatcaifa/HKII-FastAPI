@@ -97,20 +97,81 @@ const STRIP = {
   excused: ['bg-sky-400', 'Vắng có phép'],
 }
 
-// Dải điểm danh: mỗi buổi một thanh màu, buổi mới nhất ở bên phải. records: [{ date, status }] (mới nhất trước)
-export function AttendanceStrip({ records }) {
-  const ordered = [...records].reverse()
+const MAX_DAYS = 10
+const dayMonth = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}` // "2026-11-16" -> "16/11"
+
+// Dải điểm danh dạng lưới: mỗi hàng là một lớp, mỗi cột là một ngày học, ngày mới nhất ở bên phải.
+// Học viên học nhiều lớp vẫn đọc được từng buổi của từng lớp; lớp không có buổi vào ngày đó hiện ô trống.
+// records: [{ id, class_id, date, status }] (thứ tự bất kỳ); classLabel: (class_id) => tên hiển thị của lớp.
+export function AttendanceStrip({ records, classLabel = (id) => `Lớp #${id}`, days = MAX_DAYS }) {
+  const dates = [...new Set(records.map((r) => r.date))].sort().slice(-days) // cũ -> mới
+  const inWindow = new Set(dates)
+  const rows = new Map() // class_id -> Map(ngày -> bản ghi)
+  for (const r of records) {
+    if (!inWindow.has(r.date)) continue
+    if (!rows.has(r.class_id)) rows.set(r.class_id, new Map())
+    rows.get(r.class_id).set(r.date, r)
+  }
+  const classIds = [...rows.keys()].sort((a, b) => a - b)
+  const gutter = 'w-20 shrink-0 sm:w-24'
   return (
     <div>
-      <div className="flex items-end gap-1.5" role="img" aria-label="Điểm danh các buổi gần nhất">
-        {ordered.map((a, i) => (
-          <span
-            key={a.id ?? i}
-            title={`${fmtDate(a.date)}: ${STRIP[a.status][1]}`}
-            className={`h-9 flex-1 rounded-lg ${STRIP[a.status][0]} ${i === ordered.length - 1 ? 'opacity-100' : 'opacity-80'}`}
-          />
+      <p className="mb-3 text-xs text-slate-600">
+        {dates.length} ngày học gần nhất{classIds.length > 1 ? `, ${classIds.length} lớp` : ''}
+      </p>
+      <div className="space-y-1.5" aria-hidden="true">
+        {classIds.map((cid) => (
+          <div key={cid} className="flex items-center gap-2">
+            <span className={`${gutter} truncate text-xs font-medium text-slate-700`} title={classLabel(cid)}>
+              {classLabel(cid)}
+            </span>
+            <div className="flex min-w-0 flex-1 gap-1.5">
+              {dates.map((d) => {
+                const a = rows.get(cid).get(d)
+                return a ? (
+                  <span
+                    key={d}
+                    title={`${fmtDate(d)} · ${classLabel(cid)}: ${STRIP[a.status][1]}`}
+                    className={`h-6 min-w-0 flex-1 rounded-md sm:h-8 ${STRIP[a.status][0]}`}
+                  />
+                ) : (
+                  <span
+                    key={d}
+                    title={`${fmtDate(d)} · ${classLabel(cid)}: không có buổi học`}
+                    className="h-6 min-w-0 flex-1 rounded-md bg-slate-100 ring-1 ring-inset ring-slate-200 sm:h-8"
+                  />
+                )
+              })}
+            </div>
+          </div>
         ))}
+        <div className="flex items-center gap-2">
+          <span className={gutter} />
+          <div className="flex min-w-0 flex-1 gap-1.5">
+            {dates.map((d, i) => (
+              <span
+                key={d}
+                className={`w-0 min-w-0 flex-1 text-center text-[10px] leading-none tabular-nums text-slate-600 ${
+                  i === dates.length - 1 ? 'font-bold' : ''
+                } ${(dates.length - 1 - i) % 2 ? 'max-sm:invisible' : ''}`}
+              >
+                {dayMonth(d)}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
+      <ul className="sr-only">
+        {classIds.map((cid) => (
+          <li key={cid}>
+            {classLabel(cid)}:{' '}
+            {dates
+              .filter((d) => rows.get(cid).has(d))
+              .map((d) => `${dayMonth(d)} ${STRIP[rows.get(cid).get(d).status][1]}`)
+              .join('; ')}
+          </li>
+        ))}
+      </ul>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
         {Object.values(STRIP).map(([bg, text]) => (
           <span key={text} className="flex items-center gap-1.5">
