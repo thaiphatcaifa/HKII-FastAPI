@@ -90,7 +90,7 @@ export function Notice({ message }) {
 // back: { to, label } hiện liên kết quay lại phía trên tiêu đề. Cũng đặt tiêu đề tab trình duyệt.
 export function PageTitle({ title, subtitle, back, children }) {
   useEffect(() => {
-    document.title = `${title} · HKII`
+    document.title = `${title} · EduCenter`
   }, [title])
 
   return (

@@ -7,7 +7,7 @@ import { ArrowRight, ChevronLeft, GraduationCap } from 'lucide-react'
 //  - compact: bản gọn cho trang chi tiết (có back, lead là biểu tượng đứng trước tiêu đề, action nằm bên phải)
 export default function Hero({ eyebrow, title, subtitle, chips = [], action, docTitle, compact = false, back, lead }) {
   useEffect(() => {
-    if (docTitle) document.title = `${docTitle} · HKII`
+    if (docTitle) document.title = `${docTitle} · EduCenter`
   }, [docTitle])
 
   const chipRow = chips.length > 0 && (

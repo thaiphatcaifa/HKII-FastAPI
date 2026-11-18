@@ -49,7 +49,7 @@ TAGS_METADATA = [
 ]
 
 app = FastAPI(
-    title="HKII - Hệ thống quản lý trung tâm (FastAPI + PostgreSQL)",
+    title="EduCenter - Hệ thống quản lý trung tâm (FastAPI + PostgreSQL)",
     version="0.4.0",
     description=(
         "Backend của hệ thống quản lý trung tâm.\n\n"

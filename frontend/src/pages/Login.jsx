@@ -15,9 +15,9 @@ const GRADIENT = 'bg-gradient-to-br from-brand-200 via-accent-100 to-brand-100'
 const Logo = ({ className = '' }) => (
   <div className={`flex items-center gap-3 ${className}`}>
     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 font-display text-xl font-extrabold text-white shadow-lg shadow-brand-500/30">
-      H
+      E
     </div>
-    <span className="font-display text-2xl font-extrabold tracking-tight text-slate-900">HKII</span>
+    <span className="font-display text-2xl font-extrabold tracking-tight text-slate-900">EduCenter</span>
   </div>
 )
 
@@ -118,7 +118,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
-    document.title = 'Đăng nhập · HKII'
+    document.title = 'Đăng nhập · EduCenter'
   }, [])
 
   if (user) return <Navigate to="/" replace />
