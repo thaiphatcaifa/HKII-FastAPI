@@ -111,10 +111,10 @@ export default function Layout() {
         <div className="relative flex items-center justify-between gap-3 px-5 py-5 md:py-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 font-display text-lg font-extrabold text-white shadow-lg shadow-brand-500/30">
-              H
+              E
             </div>
             <div className="leading-tight">
-              <div className="font-display text-lg font-extrabold tracking-tight text-slate-900">HKII</div>
+              <div className="font-display text-lg font-extrabold tracking-tight text-slate-900">EduCenter</div>
               <div className="text-xs text-slate-500">Quản lý trung tâm</div>
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function Layout() {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <span className="font-display text-base font-extrabold tracking-tight text-slate-900 md:hidden">HKII</span>
+          <span className="font-display text-base font-extrabold tracking-tight text-slate-900 md:hidden">EduCenter</span>
           <div className="hidden items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200/70 md:flex">
             <CalendarDays className="h-4 w-4 text-brand-600" />
             {TODAY.format(new Date())}
