@@ -460,7 +460,7 @@ function FamilyHome({ user }) {
       api.get(`/attendance/summary/${studentId}`),
       api.get(`/scores/student/${studentId}/summary`),
       api.getAll(`/tuition?student_id=${studentId}`),
-      api.get(`/attendance?student_id=${studentId}&limit=10`),
+      api.get(`/attendance?student_id=${studentId}&limit=100`), // đủ để phủ 10 ngày học kể cả khi học nhiều lớp cùng ngày
       api.get(`/scores?student_id=${studentId}&limit=5`),
       api.getAll('/classes'),
     ])
@@ -521,7 +521,7 @@ function FamilyHome({ user }) {
         <div className="lg:col-span-3">
           <SectionCard title="Điểm danh các buổi gần nhất">
             <div className="p-5">
-              <div className="mb-5 grid grid-cols-4 gap-3 text-center">
+              <div className="mb-2 grid grid-cols-4 gap-3 text-center">
                 {COUNTS.map(([key, label, color]) => (
                   <div key={key}>
                     <div className={`font-display text-2xl font-extrabold tabular-nums ${color}`}>{att[key]}</div>
@@ -529,8 +529,9 @@ function FamilyHome({ user }) {
                   </div>
                 ))}
               </div>
+              <p className="mb-5 text-center text-xs text-slate-600">Tổng cộng {att.total} buổi đã điểm danh</p>
               {recentAtt.length > 0 ? (
-                <AttendanceStrip records={recentAtt} />
+                <AttendanceStrip records={recentAtt} classLabel={code} />
               ) : (
                 <p className="text-center text-sm text-slate-500">Chưa có buổi học nào được ghi nhận.</p>
               )}
